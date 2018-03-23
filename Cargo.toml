@@ -1,0 +1,7 @@
+[package]
+name = "rtsh"
+version = "0.1.0"
+authors = ["utam0k <k0ma@utam0k.jp>"]
+
+[dependencies]
+libc = "*"
