@@ -1,9 +1,10 @@
+extern crate rtsh;
 extern crate libc;
 
 use std::io::{Write, stdout, stdin};
 use std::fs;
 use std::env;
-use std::ffi::CString;
+use rtsh::parser;
 
 enum Command {}
 
@@ -35,6 +36,7 @@ fn rtsh_pwd() -> Result<(), String> {
 
 fn main() {
     println!("Welcome to rust shell.");
+    println!("{:?}", parser::Parser{pos: 0, input: "ls -al\n".to_string()}.parse());
 
     loop {
         print!("> ");
