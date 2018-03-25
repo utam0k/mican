@@ -1,14 +1,12 @@
 #[derive(Debug)]
 pub struct Command {
-    command: String,
-    options: Vec<String>,
+    pub program: String,
+    pub options: Vec<String>,
 }
 
 #[derive(Debug)]
 pub enum Token {
-    Command {
-        command: Command,
-    },
+    Command(Command),
     Pipe,
     // RedirectTo,
 }
@@ -40,23 +38,31 @@ impl Parser {
 
     fn parse_token(&mut self) -> Token {
         match self.next_char() {
-            '|' => Token::Pipe,
-            _   => Token::Command{ command: self.parse_command()},
+            '|' => self.parse_pipe(),
+            _   => Token::Command(self.parse_command()),
         }
     }
 
+    fn parse_pipe(&mut self) -> Token {
+        self.consume_char();
+        Token::Pipe
+    }
+
     fn parse_command(&mut self) -> Command {
-        let command = self.consume_while(|c| c != ' ');
+        let program = self.consume_while(|c| c != ' ');
         let mut options: Vec<String> = vec![];
         loop {
             self.consume_whitespace();
+            if self.pipe() {
+                break;
+            }
             let s = self.consume_while(|c| c != ' ');
             options.push(s);
-            if self.eof() || self.starts_with("|") {
+            if self.eof() {
                 break;
             }
         }
-        Command {command: command, options: options}
+        Command {program: program, options: options}
     }
 
     fn next_char(&self) -> char {
@@ -65,6 +71,10 @@ impl Parser {
 
     fn eof(&self) -> bool {
         self.pos >= self.input.len()
+    }
+
+    fn pipe(&mut self) -> bool {
+        self.starts_with("|")
     }
 
     fn starts_with(&self, s: &str) -> bool {
