@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Command {
     command: String,
     options: Vec<String>,
@@ -5,7 +6,9 @@ pub struct Command {
 
 #[derive(Debug)]
 pub enum Token {
-    Command,
+    Command {
+        command: Command,
+    },
     Pipe,
     // RedirectTo,
 }
@@ -36,27 +39,24 @@ impl Parser {
     }
 
     fn parse_token(&mut self) -> Token {
-        let mut last = '*'; // any char except space
         match self.next_char() {
             '|' => Token::Pipe,
-            _ => self.parse_command(),
+            _   => Token::Command{ command: self.parse_command()},
         }
-        Token::Pipe, // TODO
-        // dom::Node::text(self.consume_while(|c| c != '<').chars().fold(
-        //     "".to_string(),
-        //     |mut s, c| {
-        //         if !(last.is_whitespace() && c.is_whitespace()) {
-        //             s.push(if c.is_whitespace() { ' ' } else { c });
-        //         }
-        //         last = c;
-        //         s
-        //     },
-        // ))
     }
 
     fn parse_command(&mut self) -> Command {
-        self.consume_while(|c| c != ' ');
-        Command {command: "ls".to_string(), options: vec![]}
+        let command = self.consume_while(|c| c != ' ');
+        let mut options: Vec<String> = vec![];
+        loop {
+            self.consume_whitespace();
+            let s = self.consume_while(|c| c != ' ');
+            options.push(s);
+            if self.eof() || self.starts_with("|") {
+                break;
+            }
+        }
+        Command {command: command, options: options}
     }
 
     fn next_char(&self) -> char {

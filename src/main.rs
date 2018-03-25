@@ -36,7 +36,7 @@ fn rtsh_pwd() -> Result<(), String> {
 
 fn main() {
     println!("Welcome to rust shell.");
-    println!("{:?}", parser::Parser{pos: 0, input: "ls -al\n".to_string()}.parse());
+    println!("{:?}", parser::Parser{pos: 0, input: "ls -al".to_string()}.parse());
 
     loop {
         print!("> ");
