@@ -1,12 +1,12 @@
 #[derive(Debug)]
-pub struct Command {
+pub struct CommandData {
     pub program: String,
     pub options: Vec<String>,
 }
 
 #[derive(Debug)]
 pub enum Token {
-    Command(Command),
+    Command(CommandData),
     Pipe,
     // RedirectTo,
 }
@@ -48,7 +48,7 @@ impl Parser {
         Token::Pipe
     }
 
-    fn parse_command(&mut self) -> Command {
+    fn parse_command(&mut self) -> CommandData {
         let program = self.consume_while(|c| c != ' ');
         let mut options: Vec<String> = vec![];
         loop {
@@ -62,7 +62,7 @@ impl Parser {
                 break;
             }
         }
-        Command {program: program, options: options}
+        CommandData {program: program, options: options}
     }
 
     fn next_char(&self) -> char {

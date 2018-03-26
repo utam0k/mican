@@ -6,7 +6,7 @@ use std::fs;
 use std::env;
 use rtsh::parser;
 
-fn rtsh_cd(args: parser::Command) -> Result<(), String> {
+fn rtsh_cd(args: &parser::CommandData) -> Result<(), String> {
     if args.options.len() < 1 {
         env::set_current_dir(&env::home_dir().unwrap()).unwrap();
         return Ok(());
@@ -20,7 +20,7 @@ fn rtsh_cd(args: parser::Command) -> Result<(), String> {
     return Ok(())
 }
 
-fn rtsh_ls(_args: parser::Command) -> Result<(), String> {
+fn rtsh_ls(_args: &parser::CommandData) -> Result<(), String> {
     for entry in fs::read_dir(env::current_dir().unwrap()).unwrap() {
         println!("{:?}", entry.unwrap().file_name());
     }
@@ -46,13 +46,16 @@ fn main() {
 
         input.pop().unwrap();
         let commands = parser::Parser{pos: 0, input: input}.parse();
-        println!("{:?}", commands);
 
-        // let _ = match commands[0].command {
-        //     "cd"  => rtsh_cd(commands[0]),
-        //     "ls"  => rtsh_ls(commands[0]),
-        //     "pwd" => rtsh_pwd(),
-        //     _     => Err(format!("not found {} command.", commands[0])),
-        // }.map_err(|err| eprintln!("{}", err));
+        let c0 = &commands[0];
+        let _ = match c0 {
+            &parser::Token::Command(ref c) => match c.program.as_str() {
+                "cd"  => rtsh_cd(&c),
+                "ls"  => rtsh_ls(&c),
+                "pwd" => rtsh_pwd(),
+                _     => Err(format!("not found {} command.", c.program)),
+            },
+            _     => Err(format!("not found command.")),
+        }.map_err(|err| eprintln!("{}", err));
     }
 }
