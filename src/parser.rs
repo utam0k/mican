@@ -18,9 +18,9 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(input: String) -> Parser {
-        Parser { 
+        Parser {
             pos: 0,
-            input: input, 
+            input: input,
         }
     }
 
@@ -39,7 +39,7 @@ impl Parser {
     fn parse_token(&mut self) -> Token {
         match self.next_char() {
             '|' => self.parse_pipe(),
-            _   => Token::Command(self.parse_command()),
+            _ => Token::Command(self.parse_command()),
         }
     }
 
@@ -62,7 +62,10 @@ impl Parser {
                 break;
             }
         }
-        CommandData {program: program, options: options}
+        CommandData {
+            program: program,
+            options: options,
+        }
     }
 
     fn next_char(&self) -> char {
@@ -82,13 +85,15 @@ impl Parser {
     }
 
     fn consume_while<F>(&mut self, f: F) -> String
-        where F: Fn(char) -> bool {
-            let mut result = String::new();
-            while !self.eof() && f(self.next_char()) {
-                result.push(self.consume_char());
-            }
-            result
+    where
+        F: Fn(char) -> bool,
+    {
+        let mut result = String::new();
+        while !self.eof() && f(self.next_char()) {
+            result.push(self.consume_char());
         }
+        result
+    }
 
     fn consume_char(&mut self) -> char {
         let mut iter = self.input[self.pos..].char_indices();
@@ -102,4 +107,3 @@ impl Parser {
         self.consume_while(char::is_whitespace);
     }
 }
-
