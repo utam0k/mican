@@ -30,3 +30,6 @@ $ cargo run
 - More Built-in Commands
 - RC file
 - And more...
+
+## Author
+utam0k
