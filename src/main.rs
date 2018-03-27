@@ -32,6 +32,11 @@ fn rtsh_pwd() -> Result<(), String> {
     return Ok(());
 }
 
+fn rtsh_clear() -> Result<(), String> {
+    stdout().write_all("\x1b[2J\x1b[1;1H".as_bytes()).unwrap();
+    return Ok(());
+}
+
 fn main() {
     println!("Welcome to rust shell.");
 
@@ -54,6 +59,7 @@ fn main() {
                 "cd" => rtsh_cd(&c),
                 "ls" => rtsh_ls(&c),
                 "pwd" => rtsh_pwd(),
+                "clear" => rtsh_clear(),
                 _ => Err(format!("not found {} command.", c.program)),
             },
             _ => Err(format!("not found command.")),
