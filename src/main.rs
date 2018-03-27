@@ -1,10 +1,9 @@
-extern crate libc;
-extern crate rtsh;
+extern crate mican;
 
 use std::io::{stdin, stdout, Write};
 use std::fs;
 use std::env;
-use rtsh::parser;
+use mican::parser;
 
 fn rtsh_cd(args: &parser::CommandData) -> Result<(), String> {
     if args.options.len() < 1 {
@@ -38,7 +37,7 @@ fn rtsh_clear() -> Result<(), String> {
 }
 
 fn main() {
-    println!("Welcome to rust shell.");
+    println!("Welcome to Mican Unix Shell.");
 
     loop {
         print!("> ");
