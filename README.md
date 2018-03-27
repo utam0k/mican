@@ -1,5 +1,6 @@
 Mican Unix Shell
 ===
+[![CircleCI](https://circleci.com/gh/utam0k/mican/tree/master.svg?style=svg)](https://circleci.com/gh/utam0k/mican/tree/master)
 
 Mican is a Unix Shell written in Rust.  
 It is a toy and simple implementation of a shell.

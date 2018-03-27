@@ -1,0 +1,32 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: ubuntu:16.04
+
+    working_directory: /opt/utam0k
+
+    steps:
+      - checkout
+      - run:
+          command: set -eux
+      - run:
+          command: apt-get update
+      - run:
+          command: apt-get install -y wget build-essential
+      - run:
+          command: |
+            wget "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"
+            chmod +x rustup-init
+            ./rustup-init -y --no-modify-path --default-toolchain nightly
+            RUSTUP=~/.cargo/bin/rustup
+            CARGO=~/.cargo/bin/cargo
+            chmod -R a+w $RUSTUP $CARGO
+            rm rustup-init
+            source ~/.cargo/env
+      - run:
+          name: Test
+          command: |
+            export PATH=~/.cargo/bin:$PATH
+            cargo test
