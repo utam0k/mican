@@ -47,20 +47,19 @@ fn main() {
         stdin().read_line(&mut input).ok().expect("Failed to read.");
 
         input.pop().unwrap();
-        let commands = parser::Parser {
-            pos: 0,
-            input: input,
-        }.parse();
+        let commands = parser::Parser::new(input).parse();
 
         let c0 = &commands[0];
         let _ = match c0 {
-            &parser::Token::Command(ref c) => match c.program.as_str() {
-                "cd" => rtsh_cd(&c),
-                "ls" => rtsh_ls(&c),
-                "pwd" => rtsh_pwd(),
-                "clear" => rtsh_clear(),
-                _ => Err(format!("not found {} command.", c.program)),
-            },
+            &parser::Token::Command(ref c) => {
+                match c.program.as_str() {
+                    "cd" => rtsh_cd(&c),
+                    "ls" => rtsh_ls(&c),
+                    "pwd" => rtsh_pwd(),
+                    "clear" => rtsh_clear(),
+                    _ => Err(format!("not found {} command.", c.program)),
+                }
+            }
             _ => Err(format!("not found command.")),
         }.map_err(|err| eprintln!("{}", err));
     }
