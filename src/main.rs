@@ -49,18 +49,19 @@ fn main() {
         input.pop().unwrap();
         let commands = parser::Parser::new(input).parse();
 
-        let c0 = &commands[0];
-        let _ = match c0 {
-            &parser::Token::Command(ref c) => {
-                match c.program.as_str() {
-                    "cd" => rtsh_cd(&c),
-                    "ls" => rtsh_ls(&c),
-                    "pwd" => rtsh_pwd(),
-                    "clear" => rtsh_clear(),
-                    _ => Err(format!("not found {} command.", c.program)),
+        for c in commands {
+            match c {
+                parser::Token::Command(c) => {
+                    let _ = match c.program.as_str() {
+                        "cd" => rtsh_cd(&c),
+                        "ls" => rtsh_ls(&c),
+                        "pwd" => rtsh_pwd(),
+                        "clear" => rtsh_clear(),
+                        _ => Err(format!("not found {} command.", c.program)),
+                    }.map_err(|err| eprintln!("{}", err));
                 }
-            }
-            _ => Err(format!("not found command.")),
-        }.map_err(|err| eprintln!("{}", err));
+                parser::Token::Pipe => println!("pipe"),
+            };
+        }
     }
 }
