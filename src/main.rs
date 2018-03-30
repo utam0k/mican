@@ -3,6 +3,9 @@ extern crate mican;
 use std::io::{stdin, stdout, Write};
 use std::fs;
 use std::env;
+use std::error::Error;
+use std::io::prelude::*;
+use std::path::Path;
 use mican::parser;
 
 fn rtsh_cd(args: &parser::CommandData) -> Result<(), String> {
@@ -36,7 +39,31 @@ fn rtsh_clear() -> Result<(), String> {
     return Ok(());
 }
 
+fn display_logo() {
+    let path = Path::new("logo.txt");
+
+    let mut file = match fs::File::open(&path) {
+        Err(why) => panic!("couldn't open: {}", Error::description(&why)),
+        Ok(file) => file,
+    };
+
+    let mut s = String::new();
+    match file.read_to_string(&mut s) {
+        Err(why) => panic!("couldn't read: {}", Error::description(&why)),
+        Ok(_) => {
+            for c in s.chars() {
+                match c {
+                    '&' => print!("\x1B[38;5;{}m&\x1B[0m", 166),
+                    '8' => print!("\x1B[38;5;{}m&\x1B[0m", 64),
+                    s => print!("{}", s),
+                }
+            }
+        }
+    };
+}
+
 fn main() {
+    display_logo();
     println!("Welcome to Mican Unix Shell.");
 
     loop {
