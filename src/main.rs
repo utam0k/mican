@@ -53,8 +53,9 @@ fn display_logo() {
         Ok(_) => {
             for c in s.chars() {
                 match c {
-                    '&' => print!("\x1B[38;5;{}m&\x1B[0m", 166),
-                    '8' => print!("\x1B[38;5;{}m&\x1B[0m", 64),
+                    '&' => print!("\x1B[38;5;{}m&\x1B[0m", 212170),
+                    '8' => print!("\x1B[38;5;{}m8\x1B[0m", 70),
+                    '#' => print!("\x1B[38;5;{}m8\x1B[0m", 9346),
                     s => print!("{}", s),
                 }
             }
