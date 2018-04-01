@@ -1,14 +1,15 @@
 extern crate mican;
 
+mod parser;
+
 use std::io::{stdin, stdout, Write};
 use std::fs;
 use std::env;
 use std::error::Error;
 use std::io::prelude::*;
 use std::path::Path;
-use mican::parser;
 
-fn rtsh_cd(args: &parser::CommandData) -> Result<(), String> {
+fn rtsh_cd(args: &parser::parser::CommandData) -> Result<(), String> {
     if args.options.len() < 1 {
         env::set_current_dir(&env::home_dir().unwrap()).unwrap();
         return Ok(());
@@ -22,7 +23,7 @@ fn rtsh_cd(args: &parser::CommandData) -> Result<(), String> {
     return Ok(());
 }
 
-fn rtsh_ls(_args: &parser::CommandData) -> Result<(), String> {
+fn rtsh_ls(_args: &parser::parser::CommandData) -> Result<(), String> {
     for entry in fs::read_dir(env::current_dir().unwrap()).unwrap() {
         println!("{:?}", entry.unwrap().file_name());
     }
@@ -50,15 +51,13 @@ fn display_logo() {
     let mut s = String::new();
     match file.read_to_string(&mut s) {
         Err(why) => panic!("couldn't read: {}", Error::description(&why)),
-        Ok(_) => {
-            for c in s.chars() {
-                match c {
-                    '&' => print!("\x1B[38;5;{}m&\x1B[0m", 166),
-                    '8' => print!("\x1B[38;5;{}m&\x1B[0m", 64),
-                    s => print!("{}", s),
-                }
+        Ok(_) => for c in s.chars() {
+            match c {
+                '&' => print!("\x1B[38;5;{}m&\x1B[0m", 166),
+                '8' => print!("\x1B[38;5;{}m&\x1B[0m", 64),
+                s => print!("{}", s),
             }
-        }
+        },
     };
 }
 
@@ -74,11 +73,11 @@ fn main() {
         stdin().read_line(&mut input).ok().expect("Failed to read.");
 
         input.pop().unwrap();
-        let commands = parser::Parser::new(input).parse();
+        let commands = parser::parser::Parser::new(input).parse();
 
         for c in commands {
             match c {
-                parser::Token::Command(c) => {
+                parser::parser::Token::Command(c) => {
                     let _ = match c.program.as_str() {
                         "cd" => rtsh_cd(&c),
                         "ls" => rtsh_ls(&c),
@@ -87,7 +86,7 @@ fn main() {
                         _ => Err(format!("not found {} command.", c.program)),
                     }.map_err(|err| eprintln!("{}", err));
                 }
-                parser::Token::Pipe => println!("pipe"),
+                parser::parser::Token::Pipe => println!("pipe"),
             };
         }
     }
