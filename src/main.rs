@@ -1,5 +1,3 @@
-extern crate mican;
-
 mod parser;
 mod commands;
 
