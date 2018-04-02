@@ -51,7 +51,7 @@ fn main() {
                         "ls" => commands::ls::run(&c),
                         "pwd" => commands::pwd::run(),
                         "clear" => commands::clear::run(),
-                        _ => Err(format!("not found {} command.", c.program)),
+                        _ => commands::other::run(&c),
                     }.map_err(|err| eprintln!("{}", err));
                 }
                 parser::parser::Token::Pipe => println!("pipe"),
