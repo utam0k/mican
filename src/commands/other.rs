@@ -8,8 +8,7 @@ pub fn run(command: &parser::parser::CommandData) -> Result<(), String> {
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
-        .spawn()
-    {
+        .spawn() {
         Ok(p) => p,
         Err(e) => return Err(format!("{}", e)),
     };
