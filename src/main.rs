@@ -1,7 +1,8 @@
 mod parser;
 mod commands;
 
-use std::io::{stdin, stdout, Write};
+use std::io::{stdin, stdout};
+use std::os::unix::io::{AsRawFd, FromRawFd};
 use std::error::Error;
 use std::io::prelude::*;
 use std::fs;
@@ -18,14 +19,16 @@ fn display_logo() {
     let mut s = String::new();
     match file.read_to_string(&mut s) {
         Err(why) => panic!("couldn't read: {}", Error::description(&why)),
-        Ok(_) => for c in s.chars() {
-            match c {
-                '&' => print!("\x1B[38;5;{}m&\x1B[0m", 212170),
-                '8' => print!("\x1B[38;5;{}m8\x1B[0m", 70),
-                '#' => print!("\x1B[38;5;{}m8\x1B[0m", 9346),
-                s => print!("{}", s),
+        Ok(_) => {
+            for c in s.chars() {
+                match c {
+                    '&' => print!("\x1B[38;5;{}m&\x1B[0m", 212170),
+                    '8' => print!("\x1B[38;5;{}m8\x1B[0m", 70),
+                    '#' => print!("\x1B[38;5;{}m8\x1B[0m", 9346),
+                    s => print!("{}", s),
+                }
             }
-        },
+        }
     };
 }
 
@@ -33,6 +36,12 @@ fn main() {
     display_logo();
     println!("Welcome to Mican Unix Shell.");
 
+
+    let in_fd = stdin().as_raw_fd();
+    let out_fd = stdout().as_raw_fd();
+
+    let in_f: fs::File = unsafe { fs::File::from_raw_fd(in_fd) };
+    let out_f: fs::File = unsafe { fs::File::from_raw_fd(out_fd) };
     loop {
         print!("> ");
         stdout().flush().unwrap();
@@ -42,16 +51,15 @@ fn main() {
 
         input.pop().unwrap();
         let commands = parser::parser::Parser::new(input).parse();
-
         for c in commands {
             match c {
                 parser::parser::Token::Command(c) => {
                     let _ = match c.program.as_str() {
                         "cd" => commands::cd::run(&c),
                         "ls" => commands::ls::run(&c),
-                        "pwd" => commands::pwd::run(),
+                        "pwd" => commands::pwd::run(&in_f),
                         "clear" => commands::clear::run(),
-                        _ => commands::other::run(&c),
+                        _ => commands::other::run(&c, &in_f, &out_f),
                     }.map_err(|err| eprintln!("{}", err));
                 }
                 parser::parser::Token::Pipe => println!("pipe"),
