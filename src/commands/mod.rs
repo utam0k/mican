@@ -1,5 +1,5 @@
 pub mod cd;
-pub mod pwd;
-pub mod ls;
 pub mod clear;
+pub mod ls;
 pub mod other;
+pub mod pwd;

@@ -1,17 +1,27 @@
 extern crate libc;
 
 use std::fs;
-use std::os::unix::io::{RawFd, FromRawFd};
-use std::mem;
 use std::io::{stdin, stdout};
+use std::mem;
 use std::os::unix::io::AsRawFd;
+use std::os::unix::io::{FromRawFd, RawFd};
 
 #[derive(Debug)]
 pub struct CommandData {
     pub program: String,
     pub options: Vec<String>,
-    pub out: fs::File,
-    pub input: fs::File,
+    pub out: Option<fs::File>,
+    pub input: Option<fs::File>,
+}
+
+impl CommandData {
+    pub fn set_out(&mut self, f: fs::File) {
+        self.out = Some(f);
+    }
+
+    pub fn set_input(&mut self, f: fs::File) {
+        self.input = Some(f);
+    }
 }
 
 #[derive(Debug)]
@@ -24,28 +34,19 @@ pub enum Token {
 pub struct Parser {
     pub pos: usize,
     pub input: String,
-    pub fds: [RawFd; 2],
+    pub pipes: Vec<[RawFd; 2]>,
 }
 
 impl Parser {
     pub fn new(input: String) -> Parser {
-        // let in_fd = unsafe { libc::dup(stdin().as_raw_fd()) };
-        // let out_fd = unsafe { libc::dup(stdout().as_raw_fd()) };
-        let mut fds: [libc::c_int; 2];
-        unsafe {
-            fds = mem::uninitialized();
-            libc::pipe(fds.as_mut_ptr());
-        }
-
         Parser {
             pos: 0,
             input: input,
-            // fds: [in_fd, out_fd],
-            fds: fds,
+            pipes: vec![],
         }
     }
 
-    pub fn parse(&mut self) -> Vec<Token> {
+    pub fn parse(&mut self) -> Vec<CommandData> {
         let mut commands: Vec<Token> = vec![];
         loop {
             self.consume_whitespace();
@@ -54,7 +55,51 @@ impl Parser {
             }
             commands.push(self.parse_token());
         }
-        commands
+        self.build_pipe(commands)
+        // let commands = self.build_pipe(commands);
+        // commands
+    }
+
+    fn build_pipe(&mut self, commands: Vec<Token>) -> Vec<CommandData> {
+        // let mut next_out = unsafe { fs::File::from_raw_fd(libc::dup(stdout().as_raw_fd())) };
+        let mut next_in: fs::File =
+            unsafe { fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd())) };
+        let mut new: Vec<CommandData> = vec![];
+        let mut n = 0;
+        for cmd in commands {
+            match cmd {
+                Token::Command(mut c) => {
+                    if !self.pipes.is_empty() {
+                        let fds = self.pipes.pop().unwrap();
+                        let f_in = unsafe { fs::File::from_raw_fd(fds[0]) };
+                        let f_out = unsafe { fs::File::from_raw_fd(fds[1]) };
+                        if n == 0 {
+                            // first
+                            c.set_input(unsafe {
+                                fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd()))
+                            });
+                            c.set_out(f_out);
+                            next_in = f_in;
+                        } else {
+                            // middle
+                            c.set_input(next_in.try_clone().unwrap());
+                            c.set_out(f_out);
+                        }
+                    } else {
+                        // last
+                        c.set_input(next_in.try_clone().unwrap());
+                        c.set_out(unsafe {
+                            fs::File::from_raw_fd(libc::dup(stdout().as_raw_fd()))
+                        });
+                    }
+                    new.push(c);
+                    // new.push(cmd);
+                }
+                Token::Pipe => (),
+            }
+            n += 1;
+        }
+        new
     }
 
     fn parse_token(&mut self) -> Token {
@@ -70,8 +115,7 @@ impl Parser {
             fds = mem::uninitialized();
             libc::pipe(fds.as_mut_ptr());
         }
-        self.fds = [unsafe { libc::dup(self.fds[1]) }, fds[0]];
-
+        self.pipes.push(fds);
         self.consume_char();
         Token::Pipe
     }
@@ -94,8 +138,8 @@ impl Parser {
         CommandData {
             program: program,
             options: options,
-            input: unsafe { fs::File::from_raw_fd(self.fds[0]) },
-            out: unsafe { fs::File::from_raw_fd(self.fds[1]) },
+            input: None,
+            out: None,
         }
     }
 
