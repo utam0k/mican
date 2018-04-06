@@ -1,4 +1,4 @@
-Mican Unix Shell
+🍊 Mican Unix Shell
 ===
 [![CircleCI](https://circleci.com/gh/utam0k/mican/tree/master.svg?style=svg)](https://circleci.com/gh/utam0k/mican/tree/master)
 
