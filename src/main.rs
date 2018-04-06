@@ -2,7 +2,6 @@ mod parser;
 mod commands;
 
 use std::io::{stdin, stdout};
-use std::os::unix::io::{AsRawFd, FromRawFd};
 use std::error::Error;
 use std::io::prelude::*;
 use std::fs;
@@ -24,7 +23,7 @@ fn display_logo() {
                 match c {
                     '&' => print!("\x1B[38;5;{}m&\x1B[0m", 212170),
                     '8' => print!("\x1B[38;5;{}m8\x1B[0m", 70),
-                    '#' => print!("\x1B[38;5;{}m8\x1B[0m", 9346),
+                    '#' => print!("\x1B[38;5;{}m#\x1B[0m", 9346),
                     s => print!("{}", s),
                 }
             }
@@ -36,12 +35,6 @@ fn main() {
     display_logo();
     println!("Welcome to Mican Unix Shell.");
 
-
-    let in_fd = stdin().as_raw_fd();
-    let out_fd = stdout().as_raw_fd();
-
-    let in_f: fs::File = unsafe { fs::File::from_raw_fd(in_fd) };
-    let out_f: fs::File = unsafe { fs::File::from_raw_fd(out_fd) };
     loop {
         print!("> ");
         stdout().flush().unwrap();
@@ -57,9 +50,9 @@ fn main() {
                     let _ = match c.program.as_str() {
                         "cd" => commands::cd::run(&c),
                         "ls" => commands::ls::run(&c),
-                        "pwd" => commands::pwd::run(&in_f),
+                        "pwd" => commands::pwd::run(c),
                         "clear" => commands::clear::run(),
-                        _ => commands::other::run(&c, &in_f, &out_f),
+                        _ => commands::other::run(c),
                     }.map_err(|err| eprintln!("{}", err));
                 }
                 parser::parser::Token::Pipe => println!("pipe"),

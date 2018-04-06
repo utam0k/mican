@@ -1,7 +1,17 @@
+extern crate libc;
+
+use std::fs;
+use std::os::unix::io::{RawFd, FromRawFd};
+use std::mem;
+use std::io::{stdin, stdout};
+use std::os::unix::io::AsRawFd;
+
 #[derive(Debug)]
 pub struct CommandData {
     pub program: String,
     pub options: Vec<String>,
+    pub out: fs::File,
+    pub input: fs::File,
 }
 
 #[derive(Debug)]
@@ -14,13 +24,24 @@ pub enum Token {
 pub struct Parser {
     pub pos: usize,
     pub input: String,
+    pub fds: [RawFd; 2],
 }
 
 impl Parser {
     pub fn new(input: String) -> Parser {
+        // let in_fd = unsafe { libc::dup(stdin().as_raw_fd()) };
+        // let out_fd = unsafe { libc::dup(stdout().as_raw_fd()) };
+        let mut fds: [libc::c_int; 2];
+        unsafe {
+            fds = mem::uninitialized();
+            libc::pipe(fds.as_mut_ptr());
+        }
+
         Parser {
             pos: 0,
             input: input,
+            // fds: [in_fd, out_fd],
+            fds: fds,
         }
     }
 
@@ -44,6 +65,13 @@ impl Parser {
     }
 
     fn parse_pipe(&mut self) -> Token {
+        let mut fds: [libc::c_int; 2];
+        unsafe {
+            fds = mem::uninitialized();
+            libc::pipe(fds.as_mut_ptr());
+        }
+        self.fds = [unsafe { libc::dup(self.fds[1]) }, fds[0]];
+
         self.consume_char();
         Token::Pipe
     }
@@ -62,9 +90,12 @@ impl Parser {
                 break;
             }
         }
+
         CommandData {
             program: program,
             options: options,
+            input: unsafe { fs::File::from_raw_fd(self.fds[0]) },
+            out: unsafe { fs::File::from_raw_fd(self.fds[1]) },
         }
     }
 
