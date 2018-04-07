@@ -56,12 +56,9 @@ impl Parser {
             commands.push(self.parse_token());
         }
         self.build_pipe(commands)
-        // let commands = self.build_pipe(commands);
-        // commands
     }
 
     fn build_pipe(&mut self, commands: Vec<Token>) -> Vec<CommandData> {
-        // let mut next_out = unsafe { fs::File::from_raw_fd(libc::dup(stdout().as_raw_fd())) };
         let mut next_in: fs::File =
             unsafe { fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd())) };
         let mut new: Vec<CommandData> = vec![];
@@ -93,7 +90,6 @@ impl Parser {
                         });
                     }
                     new.push(c);
-                    // new.push(cmd);
                 }
                 Token::Pipe => (),
             }

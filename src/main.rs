@@ -45,18 +45,13 @@ fn main() {
         input.pop().unwrap();
         let commands = parser::parser::Parser::new(input).parse();
         for c in commands {
-            // match c {
-            // parser::parser::Token::Command(c) => {
             let _ = match c.program.as_str() {
                 "cd" => commands::cd::run(&c),
-                "ls" => commands::ls::run(&c),
+                "ls" => commands::ls::run(c),
                 "pwd" => commands::pwd::run(c),
                 "clear" => commands::clear::run(),
                 _ => commands::other::run(c),
             }.map_err(|err| eprintln!("{}", err));
-            // }
-            //     parser::parser::Token::Pipe => println!("pipe"),
-            // };
         }
     }
 }
