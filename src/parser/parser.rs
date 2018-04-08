@@ -117,14 +117,14 @@ impl Parser {
     }
 
     fn parse_command(&mut self) -> CommandData {
-        let program = self.consume_while(|c| c != ' ');
+        let program = self.consume_space_or_pipe();
         let mut options: Vec<String> = vec![];
         loop {
             self.consume_whitespace();
             if self.pipe() {
                 break;
             }
-            let s = self.consume_while(|c| c != ' ');
+            let s = self.consume_space_or_pipe();
             options.push(s);
             if self.eof() {
                 break;
@@ -176,5 +176,9 @@ impl Parser {
 
     fn consume_whitespace(&mut self) {
         self.consume_while(char::is_whitespace);
+    }
+
+    fn consume_space_or_pipe(&mut self) -> String {
+        self.consume_while(|c| !char::is_whitespace(c) && c != '|')
     }
 }
