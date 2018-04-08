@@ -6,6 +6,8 @@ use std::mem;
 use std::os::unix::io::AsRawFd;
 use std::os::unix::io::{FromRawFd, RawFd};
 
+const PIPE: char = '|';
+
 #[derive(Debug)]
 pub struct CommandData {
     pub program: String,
@@ -100,7 +102,7 @@ impl Parser {
 
     fn parse_token(&mut self) -> Token {
         match self.next_char() {
-            '|' => self.parse_pipe(),
+            PIPE => self.parse_pipe(),
             _ => Token::Command(self.parse_command()),
         }
     }
@@ -179,6 +181,6 @@ impl Parser {
     }
 
     fn consume_space_or_pipe(&mut self) -> String {
-        self.consume_while(|c| !char::is_whitespace(c) && c != '|')
+        self.consume_while(|c| !char::is_whitespace(c) && c != PIPE)
     }
 }
