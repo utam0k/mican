@@ -43,7 +43,7 @@ fn main() {
         stdin().read_line(&mut input).ok().expect("Failed to read.");
 
         input.pop().unwrap();
-        let commands = parser::parser::Parser::new(input).parse();
+        let commands = parser::Parser::new(input).parse();
         for c in commands {
             let _ = match c.program.as_str() {
                 "cd" => commands::cd::run(&c),

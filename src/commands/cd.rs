@@ -2,7 +2,7 @@ use parser;
 
 use std::env;
 
-pub fn run(args: &parser::parser::CommandData) -> Result<(), String> {
+pub fn run(args: &parser::CommandData) -> Result<(), String> {
     if args.options.len() < 1 {
         env::set_current_dir(&env::home_dir().unwrap()).unwrap();
         return Ok(());

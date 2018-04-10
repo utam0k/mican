@@ -2,7 +2,7 @@ use std::process::Command;
 
 use parser;
 
-pub fn run(cmd: parser::parser::CommandData) -> Result<(), String> {
+pub fn run(cmd: parser::CommandData) -> Result<(), String> {
     let input = cmd.input.unwrap();
     let out = cmd.out.unwrap();
 
