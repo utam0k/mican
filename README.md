@@ -28,10 +28,11 @@ $ cargo run
 
 ## Features
 - Pipe(supported)
-- History
 - Redirection
-- More Built-in Commands
+- Multi process
+- History
 - RC file
+- More Built-in Commands
 - Add tests
 - And more...
 
