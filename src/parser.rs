@@ -1,4 +1,7 @@
 use libc;
+
+use token::CommandData;
+
 use std::fs;
 use std::io::{stdin, stdout};
 use std::mem;
@@ -6,24 +9,6 @@ use std::os::unix::io::AsRawFd;
 use std::os::unix::io::{FromRawFd, RawFd};
 
 const PIPE: char = '|';
-
-#[derive(Debug)]
-pub struct CommandData {
-    pub program: String,
-    pub options: Vec<String>,
-    pub out: Option<fs::File>,
-    pub input: Option<fs::File>,
-}
-
-impl CommandData {
-    pub fn set_out(&mut self, f: fs::File) {
-        self.out = Some(f);
-    }
-
-    pub fn set_input(&mut self, f: fs::File) {
-        self.input = Some(f);
-    }
-}
 
 #[derive(Debug)]
 pub enum Token {

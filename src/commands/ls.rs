@@ -1,11 +1,11 @@
-use parser;
+use token::CommandData;
 
 use std::env;
 use std::fs;
 use std::io::prelude::*;
 use std::os::unix::ffi::OsStrExt;
 
-pub fn run(cmd: parser::CommandData) -> Result<(), String> {
+pub fn run(cmd: CommandData) -> Result<(), String> {
     let mut out = cmd.out.unwrap();
     for entry in fs::read_dir(env::current_dir().unwrap()).unwrap() {
         match out.write_all(entry.unwrap().file_name().as_bytes()) {
