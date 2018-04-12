@@ -1,5 +1,7 @@
-mod commands;
-mod parser;
+extern crate mican;
+
+use mican::commands;
+use mican::parser;
 
 use std::error::Error;
 use std::fs;

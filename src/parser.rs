@@ -1,5 +1,4 @@
-extern crate libc;
-
+use libc;
 use std::fs;
 use std::io::{stdin, stdout};
 use std::mem;
