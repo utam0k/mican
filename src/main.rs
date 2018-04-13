@@ -51,7 +51,7 @@ fn main() {
                 "cd" => commands::cd::run(&c),
                 "ls" => commands::ls::run(c),
                 "pwd" => commands::pwd::run(c),
-                "clear" => commands::clear::run(),
+                "clear" => commands::clear::run(c),
                 "bye" => commands::bye::run(c),
                 _ => commands::other::run(c),
             }.map_err(|err| eprintln!("{}", err));
