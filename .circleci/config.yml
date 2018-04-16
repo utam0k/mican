@@ -14,7 +14,7 @@ jobs:
           command: |
             set -eux
             apt-get update
-            apt-get install -y wget build-essential libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev cmake gcc libiberty-dev pkg-config zlib
+            apt-get install -y wget build-essential libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev cmake gcc libiberty-dev pkg-config zlib1g-dev
       - run:
           name: preparation 
           command: |
