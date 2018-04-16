@@ -10,7 +10,7 @@ use std::os::unix::io::{FromRawFd, RawFd};
 
 const PIPE: char = '|';
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Command(CommandData),
     Pipe,
@@ -33,15 +33,19 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Vec<CommandData> {
+        let tokens = self.parse_tokens();
+        self.build_pipe(tokens)
+    }
+
+    pub fn parse_tokens(&mut self) -> Vec<Token> {
         let mut commands: Vec<Token> = vec![];
         loop {
             self.consume_whitespace();
             if self.eof() || self.starts_with("\n") {
-                break;
+                return commands;
             }
             commands.push(self.parse_token());
         }
-        self.build_pipe(commands)
     }
 
     fn build_pipe(&mut self, commands: Vec<Token>) -> Vec<CommandData> {
@@ -167,4 +171,24 @@ impl Parser {
     fn consume_space_or_pipe(&mut self) -> String {
         self.consume_while(|c| !char::is_whitespace(c) && c != PIPE)
     }
+}
+
+#[test]
+fn test_parse_tokens() {
+    let input = "ls -al | grep main.rs".to_string();
+    let result = Parser::new(input).parse_tokens();
+    let ls = Token::Command(CommandData {
+        program: "ls".to_string(),
+        options: vec!["-al".to_string()],
+        input: None,
+        out: None,
+    });
+    let grep = Token::Command(CommandData {
+        program: "grep".to_string(),
+        options: vec!["main.rs".to_string()],
+        input: None,
+        out: None,
+    });
+
+    assert_eq!(result, vec![ls, Token::Pipe, grep]);
 }
