@@ -41,44 +41,53 @@ impl Parser {
         }
     }
 
-    fn build_pipe(&mut self, commands: Vec<Token>) -> Vec<CommandData> {
-        let mut next_in: fs::File =
-            unsafe { fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd())) };
-        let mut new: Vec<CommandData> = vec![];
-        let mut n = 0;
-        for cmd in commands {
-            match cmd {
-                Token::Command(mut c) => {
-                    if !self.pipes.is_empty() {
-                        let fds = self.pipes.pop().unwrap();
-                        let f_in = unsafe { fs::File::from_raw_fd(fds[0]) };
-                        let f_out = unsafe { fs::File::from_raw_fd(fds[1]) };
-                        if n == 0 {
-                            // first
-                            c.set_input(unsafe {
-                                fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd()))
-                            });
-                            c.set_out(f_out);
-                            next_in = f_in;
-                        } else {
-                            // middle
-                            c.set_input(next_in.try_clone().unwrap());
-                            c.set_out(f_out);
-                        }
-                    } else {
-                        // last
-                        c.set_input(next_in.try_clone().unwrap());
-                        c.set_out(unsafe {
-                            fs::File::from_raw_fd(libc::dup(stdout().as_raw_fd()))
-                        });
-                    }
-                    new.push(c);
-                }
-                Token::Pipe => (),
-            }
-            n += 1;
+    fn build_pipe(&mut self, mut commands: Vec<Token>) -> Vec<CommandData> {
+        commands.reverse();
+        self.set_pipe(
+            unsafe { fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd())) },
+            commands,
+            vec![],
+        )
+    }
+
+    fn set_pipe(
+        &mut self,
+        next_in: fs::File,
+        mut commands: Vec<Token>,
+        mut new: Vec<CommandData>,
+    ) -> Vec<CommandData> {
+        if commands.is_empty() {
+            return new;
         }
-        new
+
+        match commands.pop().unwrap() {
+            Token::Command(mut c) => {
+                if !self.pipes.is_empty() {
+                    let fds = self.pipes.pop().unwrap();
+                    let f_in = unsafe { fs::File::from_raw_fd(fds[0]) };
+                    let f_out = unsafe { fs::File::from_raw_fd(fds[1]) };
+                    if new.is_empty() {
+                        // first
+                        c.set_input(unsafe {
+                            fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd()))
+                        });
+                    } else {
+                        // middle
+                        c.set_input(next_in.try_clone().unwrap());
+                    }
+                    c.set_out(f_out);
+                    new.push(c);
+                    self.set_pipe(f_in, commands, new)
+                } else {
+                    // last
+                    c.set_input(next_in.try_clone().unwrap());
+                    c.set_out(unsafe { fs::File::from_raw_fd(libc::dup(stdout().as_raw_fd())) });
+                    new.push(c);
+                    self.set_pipe(next_in, commands, new)
+                }
+            }
+            Token::Pipe => self.set_pipe(next_in, commands, new),
+        }
     }
 
     fn parse_token(&mut self) -> Token {
