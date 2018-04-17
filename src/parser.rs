@@ -1,6 +1,6 @@
 use libc;
 
-use token::CommandData;
+use token::{CommandData, Token};
 
 use std::fs;
 use std::io::{stdin, stdout};
@@ -9,13 +9,6 @@ use std::os::unix::io::AsRawFd;
 use std::os::unix::io::{FromRawFd, RawFd};
 
 const PIPE: char = '|';
-
-#[derive(Debug, PartialEq)]
-pub enum Token {
-    Command(CommandData),
-    Pipe,
-    // RedirectTo,
-}
 
 pub struct Parser {
     pub pos: usize,

@@ -1,11 +1,18 @@
 use std::fs;
 
+#[derive(Debug, PartialEq)]
+pub enum Token {
+    Command(CommandData),
+    Pipe,
+    // RedirectTo,
+}
+
 #[derive(Debug)]
 pub struct CommandData {
     pub program: String,
     pub options: Vec<String>,
-    pub out: Option<fs::File>,
     pub input: Option<fs::File>,
+    pub out: Option<fs::File>,
 }
 
 impl PartialEq for CommandData {
