@@ -1,7 +1,7 @@
 extern crate mican;
 
 extern crate libc;
-use libc::{fork, pid_t, waitpid, c_int};
+use libc::{c_int, fork, pid_t, waitpid};
 
 use mican::commands;
 use mican::parser;
@@ -64,7 +64,7 @@ fn main() {
             let p = unsafe { fork() };
             if p == 0 {
                 let _ = match c.program.as_str() {
-                    "cd" => commands::cd::run(&c),
+                    "cd" => commands::cd::run(c),
                     "ls" => commands::ls::run(c),
                     "pwd" => commands::pwd::run(c),
                     "clear" => commands::clear::run(c),
