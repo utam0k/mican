@@ -1,5 +1,8 @@
 extern crate mican;
 
+extern crate libc;
+use libc::{fork, pid_t, waitpid, c_int};
+
 use mican::commands;
 use mican::parser;
 
@@ -33,6 +36,15 @@ fn display_logo() {
     };
 }
 
+fn waitpids(children: Vec<pid_t>) {
+    let mut status: i32 = 0;
+    for c in children {
+        unsafe {
+            waitpid(c, &mut status as *mut c_int, 0);
+        }
+    }
+}
+
 fn main() {
     display_logo();
     println!("Welcome to Mican Unix Shell.");
@@ -46,15 +58,25 @@ fn main() {
 
         input.pop().unwrap();
         let commands = parser::Parser::new(input).parse();
+
+        let mut children: Vec<pid_t> = Vec::new();
         for c in commands {
-            let _ = match c.program.as_str() {
-                "cd" => commands::cd::run(&c),
-                "ls" => commands::ls::run(c),
-                "pwd" => commands::pwd::run(c),
-                "clear" => commands::clear::run(c),
-                "bye" => commands::bye::run(c),
-                _ => commands::other::run(c),
-            }.map_err(|err| eprintln!("{}", err));
+            let p = unsafe { fork() };
+            if p == 0 {
+                let _ = match c.program.as_str() {
+                    "cd" => commands::cd::run(&c),
+                    "ls" => commands::ls::run(c),
+                    "pwd" => commands::pwd::run(c),
+                    "clear" => commands::clear::run(c),
+                    "bye" => commands::bye::run(c),
+                    _ => commands::other::run(c),
+                }.map_err(|err| eprintln!("{}", err));
+
+                std::process::exit(p)
+            } else {
+                children.push(p)
+            }
         }
+        waitpids(children);
     }
 }
