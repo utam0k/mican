@@ -30,7 +30,7 @@ $ cargo run
 ## Features
 - Pipe(supported)
 - Redirection
-- Multi process
+- Multi process(supported)
 - History
 - RC file
 - More Built-in Commands
