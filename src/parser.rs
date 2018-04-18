@@ -27,7 +27,7 @@ impl Parser {
 
     pub fn parse(&mut self) -> Vec<CommandData> {
         let tokens = self.parse_tokens();
-        self.build_pipe(tokens)
+        self.build_pipes(tokens)
     }
 
     pub fn parse_tokens(&mut self) -> Vec<Token> {
@@ -41,23 +41,20 @@ impl Parser {
         }
     }
 
-    fn build_pipe(&mut self, mut commands: Vec<Token>) -> Vec<CommandData> {
+    fn build_pipes(&mut self, mut commands: Vec<Token>) -> Vec<CommandData> {
         commands.reverse();
+        let stdin_fd = stdin().as_raw_fd();
+        use std::mem;
+        mem::forget(stdin_fd);
         self.set_pipe(
             unsafe { fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd())) },
             commands,
-            vec![],
         )
     }
 
-    fn set_pipe(
-        &mut self,
-        next_in: fs::File,
-        mut commands: Vec<Token>,
-        mut new: Vec<CommandData>,
-    ) -> Vec<CommandData> {
+    fn set_pipe(&mut self, next_in: fs::File, mut commands: Vec<Token>) -> Vec<CommandData> {
         if commands.is_empty() {
-            return new;
+            return Vec::new();
         }
 
         match commands.pop().unwrap() {
@@ -66,27 +63,23 @@ impl Parser {
                     let fds = self.pipes.pop().unwrap();
                     let f_in = unsafe { fs::File::from_raw_fd(fds[0]) };
                     let f_out = unsafe { fs::File::from_raw_fd(fds[1]) };
-                    if new.is_empty() {
-                        // first
-                        c.set_input(unsafe {
-                            fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd()))
-                        });
-                    } else {
-                        // middle
-                        c.set_input(next_in.try_clone().unwrap());
-                    }
+                    c.set_input(next_in);
                     c.set_out(f_out);
-                    new.push(c);
-                    self.set_pipe(f_in, commands, new)
+                    let mut ini = vec![c];
+                    ini.append(&mut self.set_pipe(f_in, commands));
+                    ini
                 } else {
                     // last
                     c.set_input(next_in.try_clone().unwrap());
-                    c.set_out(unsafe { fs::File::from_raw_fd(libc::dup(stdout().as_raw_fd())) });
-                    new.push(c);
-                    self.set_pipe(next_in, commands, new)
+                    c.set_out(unsafe {
+                        fs::File::from_raw_fd(libc::dup(stdout().as_raw_fd()))
+                    });
+                    let mut ini = vec![c];
+                    ini.append(&mut self.set_pipe(next_in, commands));
+                    ini
                 }
             }
-            Token::Pipe => self.set_pipe(next_in, commands, new),
+            Token::Pipe => self.set_pipe(next_in, commands),
         }
     }
 
