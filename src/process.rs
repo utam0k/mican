@@ -1,24 +1,31 @@
-use libc::{pid_t, fork, waitpid, c_int};
+use nix::sys::wait::waitpid;
+use nix::unistd::{fork, getpid, ForkResult, Pid};
 
 use std::process::exit;
 use token::CommandData;
 
-#[derive(Debug)]
 pub struct Process {
-    pub pid: pid_t,
+    pub pid: Pid,
     pub f: fn(CommandData) -> Result<(), String>,
+    fork_result: ForkResult,
 }
 
 impl Process {
     pub fn new(f: fn(CommandData) -> Result<(), String>) -> Process {
+        let result = fork().unwrap();
+        let pid = match result {
+            ForkResult::Parent { child } => child,
+            ForkResult::Child => getpid(),
+        };
         Process {
-            pid: unsafe { fork() },
+            pid: pid,
             f: f,
+            fork_result: result,
         }
     }
 
     pub fn in_child(&self) -> bool {
-        self.pid == 0
+        self.fork_result.is_child()
     }
 
     pub fn run(&self, cmd: CommandData) -> Result<(), String> {
@@ -28,13 +35,10 @@ impl Process {
     }
 
     pub fn wait(&self) {
-        let mut status: i32 = 0;
-        unsafe {
-            waitpid(self.pid, &mut status as *mut c_int, 0);
-        }
+        waitpid(self.pid, None).unwrap();
     }
 
     fn exit(&self) {
-        exit(self.pid)
+        exit(self.pid.into())
     }
 }

@@ -4,4 +4,4 @@ version = "0.2.0"
 authors = ["utam0k <k0ma@utam0k.jp>"]
 
 [dependencies]
-libc = "0.2.40"
+nix = "0.10.0"

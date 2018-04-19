@@ -1,7 +1,5 @@
 extern crate mican;
 
-extern crate libc;
-
 use mican::commands;
 use mican::parser;
 use mican::process::Process;

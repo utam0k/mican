@@ -1,10 +1,9 @@
-use libc;
+use nix::unistd::{dup, pipe};
 
 use token::{CommandData, Token};
 
 use std::fs;
 use std::io::{stdin, stdout};
-use std::mem;
 use std::os::unix::io::AsRawFd;
 use std::os::unix::io::{FromRawFd, RawFd};
 
@@ -13,7 +12,7 @@ const PIPE: char = '|';
 pub struct Parser {
     pub pos: usize,
     pub input: String,
-    pub pipes: Vec<[RawFd; 2]>,
+    pub pipes: Vec<(RawFd, RawFd)>,
 }
 
 impl Parser {
@@ -47,7 +46,7 @@ impl Parser {
         use std::mem;
         mem::forget(stdin_fd);
         self.set_pipe(
-            unsafe { fs::File::from_raw_fd(libc::dup(stdin().as_raw_fd())) },
+            unsafe { fs::File::from_raw_fd(dup(stdin().as_raw_fd()).unwrap()) },
             commands,
         )
     }
@@ -61,8 +60,8 @@ impl Parser {
             Token::Command(mut c) => {
                 if !self.pipes.is_empty() {
                     let fds = self.pipes.pop().unwrap();
-                    let f_in = unsafe { fs::File::from_raw_fd(fds[0]) };
-                    let f_out = unsafe { fs::File::from_raw_fd(fds[1]) };
+                    let f_in = unsafe { fs::File::from_raw_fd(fds.0) };
+                    let f_out = unsafe { fs::File::from_raw_fd(fds.1) };
                     c.set_input(next_in);
                     c.set_out(f_out);
                     let mut ini = vec![c];
@@ -71,9 +70,7 @@ impl Parser {
                 } else {
                     // last
                     c.set_input(next_in.try_clone().unwrap());
-                    c.set_out(unsafe {
-                        fs::File::from_raw_fd(libc::dup(stdout().as_raw_fd()))
-                    });
+                    c.set_out(unsafe { fs::File::from_raw_fd(dup(stdout().as_raw_fd()).unwrap()) });
                     let mut ini = vec![c];
                     ini.append(&mut self.set_pipe(next_in, commands));
                     ini
@@ -91,11 +88,7 @@ impl Parser {
     }
 
     fn parse_pipe(&mut self) -> Token {
-        let mut fds: [libc::c_int; 2];
-        unsafe {
-            fds = mem::uninitialized();
-            libc::pipe(fds.as_mut_ptr());
-        }
+        let fds = pipe().unwrap();
         self.pipes.push(fds);
         self.consume_char();
         Token::Pipe
