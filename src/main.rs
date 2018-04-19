@@ -1,10 +1,10 @@
 extern crate mican;
 
 extern crate libc;
-use libc::{c_int, fork, pid_t, waitpid};
 
 use mican::commands;
 use mican::parser;
+use mican::process::Process;
 
 use std::error::Error;
 use std::fs;
@@ -36,12 +36,9 @@ fn display_logo() {
     };
 }
 
-fn waitpids(children: Vec<pid_t>) {
-    let mut status: i32 = 0;
+fn waitpids(children: Vec<Process>) {
     for c in children {
-        unsafe {
-            waitpid(c, &mut status as *mut c_int, 0);
-        }
+        c.wait()
     }
 }
 
@@ -59,20 +56,18 @@ fn main() {
         input.pop().unwrap();
         let commands = parser::Parser::new(input).parse();
 
-        let mut children: Vec<pid_t> = Vec::new();
+        let mut children: Vec<Process> = Vec::new();
         for c in commands {
-            let p = unsafe { fork() };
-            if p == 0 {
-                let _ = match c.program.as_str() {
-                    "cd" => commands::cd::run(c),
-                    "ls" => commands::ls::run(c),
-                    "pwd" => commands::pwd::run(c),
-                    "clear" => commands::clear::run(c),
-                    "bye" => commands::bye::run(c),
-                    _ => commands::other::run(c),
-                }.map_err(|err| eprintln!("{}", err));
-
-                std::process::exit(p)
+            let p = match c.program.as_str() {
+                "cd" => Process::new(commands::cd::run),
+                "ls" => Process::new(commands::ls::run),
+                "pwd" => Process::new(commands::pwd::run),
+                "clear" => Process::new(commands::clear::run),
+                "bye" => Process::new(commands::bye::run),
+                _ => Process::new(commands::other::run),
+            };
+            if p.in_child() {
+                let _ = p.run(c).map_err(|err| eprintln!("{}", err));
             } else {
                 children.push(p)
             }
