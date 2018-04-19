@@ -29,13 +29,12 @@ $ cargo run
 
 ## Features
 - Pipe(supported)
-- Redirection
 - Multi process(supported)
-- History
-- RC file
-- More Built-in Commands
-- Add tests
-- And more...
+- Redirection(not yet)
+- History(not yet)
+- Variable(not yet)
+- RC file(not yet)
+- More Built-in Commands(not yet)
 
 ## Author
 [utam0k](https://twitter.com/utam0k)
