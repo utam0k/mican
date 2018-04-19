@@ -10,8 +10,7 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
         .args(&cmd.options)
         .stdin(input)
         .stdout(out)
-        .spawn()
-    {
+        .spawn() {
         Ok(p) => p,
         Err(e) => return Err(format!("{}", e)),
     };
