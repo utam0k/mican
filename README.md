@@ -26,6 +26,7 @@ $ cargo run
 - ls
 - clear
 - bye
+- syar
 
 ## Features
 - Pipe(supported)
