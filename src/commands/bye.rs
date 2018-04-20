@@ -14,7 +14,7 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
             // TODO
             // kill(getppid(), Signal::SIGCHLD).unwrap();
             kill(getppid(), Signal::SIGINT).unwrap();
-            exit(1);
+            exit(0);
         }
         Err(_) => Err("Error: bye".to_string()),
     }
