@@ -62,6 +62,7 @@ fn main() {
                 "pwd" => Process::new(commands::pwd::run),
                 "clear" => Process::new(commands::clear::run),
                 "bye" => Process::new(commands::bye::run),
+                "tanakh" => Process::new(commands::tanakh::run),
                 _ => Process::new(commands::other::run),
             };
             if p.in_child() {
