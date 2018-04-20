@@ -63,6 +63,7 @@ fn main() {
                 "clear" => Process::new(commands::clear::run),
                 "bye" => Process::new(commands::bye::run),
                 "tanakh" => Process::new(commands::tanakh::run),
+                "syar" => Process::new(commands::syar::run),
                 _ => Process::new(commands::other::run),
             };
             if p.in_child() {
