@@ -31,10 +31,11 @@ $ cargo run
 - Pipe(supported)
 - Multi process(supported)
 - Redirection(not yet)
+- Signal(not yet)
 - History(not yet)
 - Variable(not yet)
 - RC file(not yet)
-- More Built-in Commands(not yet)
+- More Built-in Commands
 
 ## Author
 [utam0k](https://twitter.com/utam0k)
