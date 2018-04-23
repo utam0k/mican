@@ -70,7 +70,9 @@ impl Parser {
                 } else {
                     // last
                     c.set_input(next_in.try_clone().unwrap());
-                    c.set_out(unsafe { fs::File::from_raw_fd(dup(stdout().as_raw_fd()).unwrap()) });
+                    c.set_out(unsafe {
+                        fs::File::from_raw_fd(dup(stdout().as_raw_fd()).unwrap())
+                    });
                     let mut ini = vec![c];
                     ini.append(&mut self.set_pipe(next_in, commands));
                     ini

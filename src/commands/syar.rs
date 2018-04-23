@@ -21,12 +21,11 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
         out.write_all("\x1b[2K\x1b[1G".as_bytes()).unwrap();
         out.write_all(tanakh.as_bytes()).unwrap();
 
-        let t =
-            if n % syars.len() == syars.len() - 1 {
-                time::Duration::from_millis(500)
-            } else {
-                time::Duration::from_millis(200)
-            };
+        let t = if n % syars.len() == syars.len() - 1 {
+            time::Duration::from_millis(500)
+        } else {
+            time::Duration::from_millis(200)
+        };
         thread::sleep(t);
         n += 1;
         if n > 100 {
