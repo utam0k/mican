@@ -3,11 +3,11 @@ extern crate mican;
 use mican::commands;
 use mican::parser;
 use mican::process::Process;
+use mican::reader::Reader;
 
 use std::error::Error;
 use std::fs;
 use std::io::prelude::*;
-use std::io::{stdin, stdout};
 use std::path::Path;
 
 fn display_logo() {
@@ -43,15 +43,11 @@ fn waitpids(children: Vec<Process>) {
 fn main() {
     display_logo();
     println!("Welcome to Mican Unix Shell.");
+    let mut reader = Reader::new("> ".into());
 
     loop {
-        print!("> ");
-        stdout().flush().unwrap();
+        let input = reader.read_line();
 
-        let mut input = String::new();
-        stdin().read_line(&mut input).ok().expect("Failed to read.");
-
-        input.pop().unwrap();
         let commands = parser::Parser::new(input).parse();
 
         let mut children: Vec<Process> = Vec::new();
