@@ -31,8 +31,8 @@ $ cargo run
 ## Features
 - Pipe(supported)
 - Multi process(supported)
+- Non-canonical(not yet)
 - Redirection(not yet)
-- Signal(not yet)
 - History(not yet)
 - Variable(not yet)
 - RC file(not yet)
