@@ -64,7 +64,7 @@ impl Term {
     }
 
     pub fn move_left(&mut self, n: usize) -> io::Result<()> {
-        self.pos -= 1;
+        self.pos -= n;
         self.write(&format!("\x1b[{}D\x1b[J", n))
     }
 }
