@@ -11,7 +11,7 @@ use nix::sys::select::{select, FdSet};
 use nix::unistd::read;
 
 pub struct Reader {
-    pos: i32,
+    pos: usize,
     prompt: String,
     bindings: Vec<(Cow<'static, [u8]>, Keybind)>,
 }
@@ -48,9 +48,9 @@ impl Reader {
                         io::stdout().flush().unwrap();
                     }
                     Some(Keybind::Delete) => {
-                        line.pop();
-                        print!("\x1b[1D\x1b[J");
-                        if self.pos > -1 {
+                        if self.pos > self.prompt.capacity() - 2 {
+                            line.pop();
+                            print!("\x1b[1D\x1b[J");
                             self.pos -= 1;
                         }
                         io::stdout().flush().unwrap();
