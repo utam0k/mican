@@ -47,6 +47,11 @@ impl Reader {
                             self.term.delete(1).unwrap();
                         }
                     } 
+                    Some(Keybind::BackwardChar) => {
+                        if self.term.pos > 0 {
+                            self.term.move_left(1).unwrap();
+                        }
+                    }
                     None => {
                         self.term.put(String::from_utf8(ch).unwrap()).unwrap();
                     }
@@ -139,6 +144,7 @@ enum Keybind {
     Enter,
     Delete,
     CtrlL,
+    BackwardChar,
 }
 
 fn bindings() -> Vec<(Cow<'static, [u8]>, Keybind)> {
@@ -146,5 +152,6 @@ fn bindings() -> Vec<(Cow<'static, [u8]>, Keybind)> {
         (Cow::Borrowed(b"\r"), Keybind::Enter),
         (Cow::Borrowed(b"\x7f"), Keybind::Delete),
         (Cow::Borrowed(b"\x0c"), Keybind::CtrlL),
+        (Cow::Borrowed(b"\x1b[D"), Keybind::BackwardChar),
     ]
 }
