@@ -10,9 +10,10 @@ use nix::sys::termios::{tcgetattr, tcsetattr, SetArg, LocalFlags, InputFlags,
 use nix::sys::select::{select, FdSet};
 use nix::unistd::read;
 
+use term::Term;
+
 pub struct Reader {
-    pos: usize,
-    prompt: String,
+    term: Term,
     bindings: Vec<(Cow<'static, [u8]>, Keybind)>,
 }
 
@@ -20,16 +21,13 @@ impl Reader {
     pub fn new(prompt: String) -> Self {
         settings_term();
         Reader {
-            pos: 0,
-            prompt: prompt,
+            term: Term::new(prompt),
             bindings: bindings(),
         }
     }
 
     pub fn read_line(&mut self) -> String {
-        let mut line = Vec::new();
-
-        print!("{}", self.prompt);
+        print!("{}", self.term.prompt);
         io::stdout().flush().unwrap();
         loop {
             if wait_input() {
@@ -38,29 +36,22 @@ impl Reader {
                 let res = self.find_bind(&ch);
                 match res {
                     Some(Keybind::Enter) => {
-                        println!("");
-                        self.pos = 0;
-                        return line.concat();
+                        let result = self.term.line.clone();
+                        self.term.reset();
+                        self.term.new_line().unwrap();
+                        return result;
                     }
                     Some(Keybind::CtrlL) => {
-                        print!("\x1b[2J\x1b[1;1H");
-                        print!("{}{}", self.prompt, line.concat());
-                        io::stdout().flush().unwrap();
+                        self.term.clear_screen().unwrap();
+                        self.term.write_line().unwrap();
                     }
                     Some(Keybind::Delete) => {
-                        if self.pos > self.prompt.capacity() - 2 {
-                            line.pop();
-                            print!("\x1b[1D\x1b[J");
-                            self.pos -= 1;
+                        if self.term.pos > self.term.prompt.capacity() - 2 {
+                            self.term.delete(1).unwrap();
                         }
-                        io::stdout().flush().unwrap();
                     } 
                     None => {
-                        let c = String::from_utf8(ch).unwrap();
-                        print!("{}", c);
-                        io::stdout().flush().unwrap();
-                        self.pos += 1;
-                        line.push(c);
+                        self.term.put(String::from_utf8(ch).unwrap()).unwrap();
                     }
                 }
             }
