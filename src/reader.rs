@@ -34,25 +34,20 @@ impl Reader {
         loop {
             if wait_input() {
                 let mut ch: Vec<u8> = Vec::new();
-                let _a = self.read_char(&mut ch).unwrap();
-                let mut res = None;
-                for &(ref bind, ref cmd) in &self.bindings {
-                    if bind == &ch {
-                        res = Some(cmd);
-                    }
-                }
+                let _ = self.read_char(&mut ch).unwrap();
+                let res = self.find_bind(&ch);
                 match res {
-                    Some(&Keybind::Enter) => {
+                    Some(Keybind::Enter) => {
                         println!("");
                         self.pos = 0;
                         return line.concat();
                     }
-                    Some(&Keybind::CtrlL) => {
+                    Some(Keybind::CtrlL) => {
                         print!("\x1b[2J\x1b[1;1H");
                         print!("{}{}", self.prompt, line.concat());
                         io::stdout().flush().unwrap();
                     }
-                    Some(&Keybind::Delete) => {
+                    Some(Keybind::Delete) => {
                         line.pop();
                         print!("\x1b[1D\x1b[J");
                         if self.pos > -1 {
@@ -90,6 +85,15 @@ impl Reader {
         }
 
         Ok(n)
+    }
+
+    fn find_bind(&self, ch: &Vec<u8>) -> Option<Keybind> {
+        for &(ref bind, ref cmd) in &self.bindings {
+            if bind == ch {
+                return Some(cmd.clone());
+            }
+        }
+        return None;
     }
 }
 
@@ -142,6 +146,7 @@ fn wait_input() -> bool {
     }
 }
 
+#[derive(Clone)]
 enum Keybind {
     Enter,
     Delete,
