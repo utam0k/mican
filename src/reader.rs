@@ -1,5 +1,3 @@
-use std::io;
-use std::io::Write;
 use std::borrow::Cow;
 
 use libc::STDIN_FILENO;
@@ -27,8 +25,7 @@ impl Reader {
     }
 
     pub fn read_line(&mut self) -> String {
-        print!("{}", self.term.prompt);
-        io::stdout().flush().unwrap();
+        self.term.write_prompt().unwrap();
         loop {
             if wait_input() {
                 let mut ch: Vec<u8> = Vec::new();

@@ -37,6 +37,10 @@ impl Term {
         self.write(s)
     }
 
+    pub fn write_prompt(&mut self) -> io::Result<()> {
+        self.write(&self.prompt)
+    }
+
     pub fn write_str(&mut self, s: &str) -> io::Result<()> {
         self.pos += s.len();
         self.write(s)
