@@ -54,7 +54,8 @@ impl Term {
         lock.flush()
     }
 
-    pub fn clear_screen(&self) -> io::Result<()> {
+    pub fn clear_screen(&mut self) -> io::Result<()> {
+        self.pos = 0;
         self.write(&format!("\x1b[2J\x1b[1;1H{}", self.prompt))
     }
 
