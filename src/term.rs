@@ -24,14 +24,14 @@ impl Term {
         if self.is_start() {
             return Ok(());
         }
-        self.line.remove(self.pos - 1);
+        self.line.remove(self.pos - n);
         self.move_left(n)?;
         self.clear_to_screen_end()?;
         if self.pos != self.line.len() {
             let line = self.line.clone();
             let pos = self.pos;
             self.write(&line.get(pos..).unwrap())?;
-            return self.move_to(pos + 1);
+            return self.move_to(pos + n);
         } else {
             return Ok(());
         }
@@ -44,7 +44,7 @@ impl Term {
             let old_pos = self.pos;
             self.clear_to_screen_end()?;
             self.write(&line.get(old_pos..).unwrap())?;
-            return self.move_to(old_pos + 2);
+            return self.move_to(old_pos + s.len() + 1);
         } else {
             self.line.insert_str(self.pos, &s);
             return self.write_str(&s);
