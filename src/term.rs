@@ -98,6 +98,11 @@ impl Term {
         self.write(&format!("\x1b[{}D", n))
     }
 
+    pub fn move_right(&mut self, n: usize) -> io::Result<()> {
+        self.pos += n;
+        self.write(&format!("\x1b[{}C", n))
+    }
+
     // fn move_to_first(&mut self) -> io::Result<()> {
     //     self.move_to(0)
     // }
