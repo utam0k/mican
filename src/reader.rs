@@ -9,9 +9,11 @@ use nix::sys::select::{select, FdSet};
 use nix::unistd::read;
 
 use term::Term;
+use history::History;
 
 pub struct Reader {
     term: Term,
+    history: History,
     bindings: Vec<(Cow<'static, [u8]>, Keybind)>,
 }
 
@@ -20,6 +22,7 @@ impl Reader {
         settings_term();
         Reader {
             term: Term::new(prompt),
+            history: History::new(),
             bindings: bindings(),
         }
     }
@@ -36,6 +39,7 @@ impl Reader {
                         let result = self.term.line.clone();
                         self.term.reset();
                         self.term.new_line().unwrap();
+                        self.history.push(result.clone());
                         return result;
                     }
                     Some(Keybind::CtrlL) => {
@@ -43,8 +47,22 @@ impl Reader {
                         self.term.write_line().unwrap();
                     }
                     Some(Keybind::Delete) => self.term.delete(1).unwrap(),
-                    Some(Keybind::BackwardChar) => self.term.move_left(1).unwrap(),
                     Some(Keybind::ForwardChar) => self.term.move_right(1).unwrap(),
+                    Some(Keybind::BackwardChar) => self.term.move_left(1).unwrap(),
+                    Some(Keybind::PreviousHistory) => {
+                        let history = match self.history.prev() {
+                            Some(h) => h,
+                            None => continue,
+                        };
+                        self.term.rewrite(history).unwrap();
+                    }
+                    Some(Keybind::NextHistory) => {
+                        let history = match self.history.next() {
+                            Some(h) => h,
+                            None => continue,
+                        };
+                        self.term.rewrite(history).unwrap();
+                    }
                     None => self.term.put(String::from_utf8(ch).unwrap()).unwrap(),
                 }
             }
@@ -135,8 +153,10 @@ enum Keybind {
     Enter,
     Delete,
     CtrlL,
-    BackwardChar,
     ForwardChar,
+    BackwardChar,
+    PreviousHistory,
+    NextHistory,
 }
 
 fn bindings() -> Vec<(Cow<'static, [u8]>, Keybind)> {
@@ -146,5 +166,9 @@ fn bindings() -> Vec<(Cow<'static, [u8]>, Keybind)> {
         (Cow::Borrowed(b"\x0c"), Keybind::CtrlL),
         (Cow::Borrowed(b"\x1b[C"), Keybind::ForwardChar),
         (Cow::Borrowed(b"\x1b[D"), Keybind::BackwardChar),
+        (Cow::Borrowed(b"\x1bOA"), Keybind::PreviousHistory),
+        (Cow::Borrowed(b"\x1bOB"), Keybind::NextHistory),
+        (Cow::Borrowed(b"\x1b[A"), Keybind::PreviousHistory),
+        (Cow::Borrowed(b"\x1b[B"), Keybind::NextHistory),
     ]
 }

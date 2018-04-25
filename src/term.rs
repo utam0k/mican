@@ -53,7 +53,6 @@ impl Term {
 
     pub fn write_line(&mut self) -> io::Result<()> {
         let s = &self.line;
-        self.pos += s.len();
         self.write(s)
     }
 
@@ -64,6 +63,12 @@ impl Term {
     pub fn write_str(&mut self, s: &str) -> io::Result<()> {
         self.pos += s.len();
         self.write(s)
+    }
+
+    pub fn rewrite(&mut self, s: &str) -> io::Result<()> {
+        self.clear_line().unwrap();
+        self.line = s.to_string();
+        self.write_line()
     }
 
     pub fn new_line(&mut self) -> io::Result<()> {
@@ -77,6 +82,16 @@ impl Term {
         lock.write_all(s.as_bytes())?;
         lock.flush()
     }
+
+    pub fn clear_line(&mut self) -> io::Result<()> {
+        self.line = String::new();
+        let old_pos = self.pos;
+        self.move_to_first()?;
+        self.clear_to_screen_end()?;
+        self.pos = old_pos;
+        return Ok(());
+    }
+
 
     pub fn clear_screen(&mut self) -> io::Result<()> {
         self.pos = 0;
@@ -101,6 +116,10 @@ impl Term {
         }
         self.pos += n;
         self.write(&format!("\x1b[{}C", n))
+    }
+
+    fn move_to_first(&mut self) -> io::Result<()> {
+        self.move_to(1)
     }
 
     fn move_to(&mut self, n: usize) -> io::Result<()> {
