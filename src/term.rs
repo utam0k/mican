@@ -27,7 +27,7 @@ impl Term {
         self.line.remove(self.pos - n);
         self.move_left(n)?;
         self.clear_to_screen_end()?;
-        if self.pos != self.line.len() {
+        if !self.is_last() {
             let line = self.line.clone();
             let pos = self.pos;
             self.write(&line.get(pos..).unwrap())?;
@@ -38,7 +38,7 @@ impl Term {
     }
 
     pub fn put(&mut self, s: String) -> io::Result<()> {
-        if self.pos < self.line.len() {
+        if !self.is_last() {
             self.line.insert_str(self.pos, &s);
             let line = self.line.clone();
             let old_pos = self.pos;
