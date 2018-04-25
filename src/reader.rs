@@ -42,22 +42,10 @@ impl Reader {
                         self.term.clear_screen().unwrap();
                         self.term.write_line().unwrap();
                     }
-                    Some(Keybind::Delete) => {
-                        if self.term.pos > self.term.prompt.capacity() - 2 {
-                            self.term.delete(1).unwrap();
-                        }
-                    } 
-                    Some(Keybind::BackwardChar) => {
-                        if self.term.pos > 0 {
-                            self.term.move_left(1).unwrap();
-                        }
-                    }
-                    Some(Keybind::ForwardChar) => {
-                        self.term.move_right(1).unwrap();
-                    }
-                    None => {
-                        self.term.put(String::from_utf8(ch).unwrap()).unwrap();
-                    }
+                    Some(Keybind::Delete) => self.term.delete(1).unwrap(),
+                    Some(Keybind::BackwardChar) => self.term.move_left(1).unwrap(),
+                    Some(Keybind::ForwardChar) => self.term.move_right(1).unwrap(),
+                    None => self.term.put(String::from_utf8(ch).unwrap()).unwrap(),
                 }
             }
         }

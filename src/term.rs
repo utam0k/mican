@@ -21,6 +21,9 @@ impl Term {
     }
 
     pub fn delete(&mut self, n: usize) -> io::Result<()> {
+        if self.is_start() {
+            return Ok(());
+        }
         self.line.remove(self.pos - 1);
         self.move_left(n)?;
         self.clear_to_screen_end()?;
@@ -75,15 +78,6 @@ impl Term {
         lock.flush()
     }
 
-    // fn clear_line(&mut self) -> io::Result<()> {
-    //     self.line = String::new();
-    //     let old_pos = self.pos;
-    //     self.move_to_first()?;
-    //     self.clear_to_screen_end()?;
-    //     self.pos = old_pos;
-    //     return Ok(());
-    // }
-
     pub fn clear_screen(&mut self) -> io::Result<()> {
         self.pos = 0;
         self.write(&format!("\x1b[2J\x1b[1;1H{}", self.prompt))
@@ -94,21 +88,31 @@ impl Term {
     }
 
     pub fn move_left(&mut self, n: usize) -> io::Result<()> {
+        if self.is_start() {
+            return Ok(());
+        }
         self.pos -= n;
         self.write(&format!("\x1b[{}D", n))
     }
 
     pub fn move_right(&mut self, n: usize) -> io::Result<()> {
+        if self.is_last() {
+            return Ok(());
+        }
         self.pos += n;
         self.write(&format!("\x1b[{}C", n))
     }
 
-    // fn move_to_first(&mut self) -> io::Result<()> {
-    //     self.move_to(0)
-    // }
-
     fn move_to(&mut self, n: usize) -> io::Result<()> {
         self.pos = n - 1;
         self.write(&format!("\x1b[{}G", self.prompt.len() + n))
+    }
+
+    fn is_start(&self) -> bool {
+        self.pos < 1
+    }
+
+    fn is_last(&self) -> bool {
+        self.pos + 1 > self.line.len()
     }
 }
