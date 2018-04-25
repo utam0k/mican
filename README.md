@@ -29,13 +29,13 @@ $ cargo run
 - [x] syar
 
 ## Features
-- [x] Pipe(supported)
-- [x] Multi process(supported)
-- [ ] Non-canonical(not yet)
-- [ ] Redirection(not yet)
-- [ ] History(not yet)
-- [ ] Variable(not yet)
-- [ ] RC file(not yet)
+- [x] Pipe
+- [x] Multi process
+- [ ] Non-canonical
+- [ ] Redirection
+- [ ] History
+- [ ] Variable
+- [ ] RC file
 
 ## Author
 [utam0k](https://twitter.com/utam0k)

@@ -24,26 +24,26 @@ impl Term {
         self.line.remove(self.pos - 1);
         self.move_left(n)?;
         self.clear_to_screen_end()?;
-        // println!("pos: {}, len: {}", self.pos, self.line.len());
         if self.pos != self.line.len() {
             let line = self.line.clone();
             let pos = self.pos;
             self.write(&line.get(pos..).unwrap())?;
-            return self.move_to(pos);
+            return self.move_to(pos + 1);
         } else {
             return Ok(());
         }
     }
 
     pub fn put(&mut self, s: String) -> io::Result<()> {
-        self.line.insert_str(self.pos, &s);
-        if self.pos != self.line.len() - 1 {
-            let pos = self.pos;
+        if self.pos < self.line.len() {
+            self.line.insert_str(self.pos, &s);
             let line = self.line.clone();
+            let old_pos = self.pos;
             self.clear_to_screen_end()?;
-            self.write(&line.get(pos..).unwrap())?;
-            return self.move_to(pos + 2);
+            self.write(&line.get(old_pos..).unwrap())?;
+            return self.move_to(old_pos + 2);
         } else {
+            self.line.insert_str(self.pos, &s);
             return self.write_str(&s);
         }
     }
@@ -75,14 +75,14 @@ impl Term {
         lock.flush()
     }
 
-    fn clear_line(&mut self) -> io::Result<()> {
-        self.line = String::new();
-        let old_pos = self.pos;
-        self.move_to_first()?;
-        self.clear_to_screen_end()?;
-        self.pos = old_pos;
-        return Ok(());
-    }
+    // fn clear_line(&mut self) -> io::Result<()> {
+    //     self.line = String::new();
+    //     let old_pos = self.pos;
+    //     self.move_to_first()?;
+    //     self.clear_to_screen_end()?;
+    //     self.pos = old_pos;
+    //     return Ok(());
+    // }
 
     pub fn clear_screen(&mut self) -> io::Result<()> {
         self.pos = 0;
@@ -98,12 +98,12 @@ impl Term {
         self.write(&format!("\x1b[{}D", n))
     }
 
-    fn move_to_first(&mut self) -> io::Result<()> {
-        self.move_to(0)
-    }
+    // fn move_to_first(&mut self) -> io::Result<()> {
+    //     self.move_to(0)
+    // }
 
     fn move_to(&mut self, n: usize) -> io::Result<()> {
-        self.pos = n;
+        self.pos = n - 1;
         self.write(&format!("\x1b[{}G", self.prompt.len() + n))
     }
 }
