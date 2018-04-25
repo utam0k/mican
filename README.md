@@ -21,22 +21,21 @@ $ cargo run
 ```
 
 ## Built-in Commands
-- cd
-- pwd
-- ls
-- clear
-- bye
-- syar
+- [x] cd
+- [x] pwd
+- [x] ls
+- [x] clear
+- [x] bye
+- [x] syar
 
 ## Features
-- Pipe(supported)
-- Multi process(supported)
-- Non-canonical(not yet)
-- Redirection(not yet)
-- History(not yet)
-- Variable(not yet)
-- RC file(not yet)
-- More Built-in Commands
+- [x] Pipe(supported)
+- [x] Multi process(supported)
+- [ ] Non-canonical(not yet)
+- [ ] Redirection(not yet)
+- [ ] History(not yet)
+- [ ] Variable(not yet)
+- [ ] RC file(not yet)
 
 ## Author
 [utam0k](https://twitter.com/utam0k)
