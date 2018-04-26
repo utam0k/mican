@@ -59,7 +59,7 @@ fn test_history() {
     history.push("B".to_string());
     history.push("C".to_string());
 
-    assert_eq!(history.next(), Some(&"C".to_string()));
+    assert_eq!(history.prev(), Some(&"C".to_string()));
     assert_eq!(history.prev(), Some(&"B".to_string()));
     assert_eq!(history.prev(), Some(&"A".to_string()));
     assert_eq!(history.prev(), None);
