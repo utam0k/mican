@@ -34,37 +34,58 @@ impl Reader {
                 let mut ch: Vec<u8> = Vec::new();
                 let _ = self.read_char(&mut ch).unwrap();
                 let res = self.find_bind(&ch);
-                match res {
-                    Some(Keybind::Enter) => {
-                        let result = self.term.line.clone();
-                        self.term.reset();
-                        self.term.new_line().unwrap();
-                        self.history.push(result.clone());
-                        return result;
-                    }
-                    Some(Keybind::CtrlL) => {
-                        self.term.clear_screen().unwrap();
-                        self.term.write_line().unwrap();
-                    }
-                    Some(Keybind::Delete) => self.term.delete(1).unwrap(),
-                    Some(Keybind::ForwardChar) => self.term.move_right(1).unwrap(),
-                    Some(Keybind::BackwardChar) => self.term.move_left(1).unwrap(),
-                    Some(Keybind::PreviousHistory) => {
-                        let history = match self.history.prev() {
-                            Some(h) => h,
-                            None => continue,
-                        };
-                        self.term.rewrite(history).unwrap();
-                    }
-                    Some(Keybind::NextHistory) => {
-                        let history = match self.history.next() {
-                            Some(h) => h,
-                            None => continue,
-                        };
-                        self.term.rewrite(history).unwrap();
-                    }
-                    None => self.term.put(String::from_utf8(ch).unwrap()).unwrap(),
+                if let Some(line) = self.execute_sequence(res, ch) {
+                    return line;
                 }
+            }
+        }
+    }
+
+    fn execute_sequence(&mut self, res: Option<Keybind>, ch: Vec<u8>) -> Option<String> {
+        match res {
+            Some(Keybind::Enter) => {
+                let result = self.term.line.clone();
+                self.term.reset();
+                self.term.new_line().unwrap();
+                self.history.push(result.clone());
+                return Some(result);
+            }
+            Some(Keybind::CtrlL) => {
+                self.term.clear_screen().unwrap();
+                self.term.write_line().unwrap();
+                return None;
+            }
+            Some(Keybind::Delete) => {
+                self.term.delete(1).unwrap();
+                return None;
+            }
+            Some(Keybind::ForwardChar) => {
+                self.term.move_right(1).unwrap();
+                return None;
+            }
+            Some(Keybind::BackwardChar) => {
+                self.term.move_left(1).unwrap();
+                return None;
+            }
+            Some(Keybind::PreviousHistory) => {
+                let history = match self.history.prev() {
+                    Some(h) => h,
+                    None => return None,
+                };
+                self.term.rewrite(history).unwrap();
+                return None;
+            }
+            Some(Keybind::NextHistory) => {
+                let history = match self.history.next() {
+                    Some(h) => h,
+                    None => return None,
+                };
+                self.term.rewrite(history).unwrap();
+                return None;
+            }
+            None => {
+                self.term.put(String::from_utf8(ch).unwrap()).unwrap();
+                return None;
             }
         }
     }
