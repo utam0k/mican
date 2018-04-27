@@ -65,4 +65,5 @@ fn test_history() {
     assert_eq!(history.prev(), None);
     assert_eq!(history.next(), Some(&"B".to_string()));
     assert_eq!(history.next(), Some(&"C".to_string()));
+    assert_eq!(history.next(), None);
 }
