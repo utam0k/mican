@@ -48,6 +48,7 @@ impl Reader {
                 self.term.reset();
                 self.term.new_line().unwrap();
                 self.history.push(result.clone());
+                self.history.reset();
                 return Some(result);
             }
             Some(Keybind::CtrlL) => {
@@ -68,6 +69,9 @@ impl Reader {
                 return None;
             }
             Some(Keybind::PreviousHistory) => {
+                if self.history.is_started() {
+                    self.history.set_first(self.term.line.clone());
+                }
                 let history = match self.history.prev() {
                     Some(h) => h,
                     None => return None,
@@ -85,6 +89,7 @@ impl Reader {
             }
             None => {
                 self.term.put(String::from_utf8(ch).unwrap()).unwrap();
+                self.history.reset_first();
                 return None;
             }
         }
