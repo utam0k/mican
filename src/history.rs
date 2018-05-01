@@ -47,8 +47,10 @@ impl History {
 
     pub fn prev(&mut self) -> Option<&String> {
         if self.prev == HistoryExec::Next {
-            self.pos += 1;
             self.prev = HistoryExec::Prev;
+            if self.pos != 0 {
+                self.pos += 1;
+            }
         }
         let ret = self.list.get(self.pos);
         if ret.is_none() {
