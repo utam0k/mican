@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::ops::Not;
 
 pub struct History {
     pub list: VecDeque<String>,
@@ -7,10 +8,21 @@ pub struct History {
     first: Option<String>,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 enum HistoryExec {
     Next,
     Prev,
+}
+
+impl Not for HistoryExec {
+    type Output = HistoryExec;
+
+    fn not(self) -> Self {
+        match self {
+            HistoryExec::Next => HistoryExec::Prev,
+            HistoryExec::Prev => HistoryExec::Next,
+        }
+    }
 }
 
 impl History {
@@ -31,7 +43,7 @@ impl History {
 
     pub fn next(&mut self) -> Option<&String> {
         if self.prev == HistoryExec::Prev {
-            self.prev = HistoryExec::Next;
+            self.prev = !self.prev.clone();
             if self.pos != 0 {
                 self.pos -= 1;
             }
@@ -50,7 +62,7 @@ impl History {
 
     pub fn prev(&mut self) -> Option<&String> {
         if self.prev == HistoryExec::Next {
-            self.prev = HistoryExec::Prev;
+            self.prev = !self.prev.clone();
             if self.pos != 0 {
                 self.pos += 1;
             }
