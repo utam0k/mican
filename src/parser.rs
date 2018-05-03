@@ -1,10 +1,9 @@
 use nix::unistd::{dup, pipe};
+use libc::{STDIN_FILENO, STDOUT_FILENO};
 
 use token::{CommandData, Token};
 
 use std::fs;
-use std::io::{stdin, stdout};
-use std::os::unix::io::AsRawFd;
 use std::os::unix::io::{FromRawFd, RawFd};
 
 const PIPE: char = '|';
@@ -42,11 +41,11 @@ impl Parser {
 
     fn build_pipes(&mut self, mut commands: Vec<Token>) -> Vec<CommandData> {
         commands.reverse();
-        let stdin_fd = stdin().as_raw_fd();
+        let stdin_fd = STDIN_FILENO;
         use std::mem;
         mem::forget(stdin_fd);
         self.set_pipe(
-            unsafe { fs::File::from_raw_fd(dup(stdin().as_raw_fd()).unwrap()) },
+            unsafe { fs::File::from_raw_fd(dup(STDIN_FILENO).unwrap()) },
             commands,
         )
     }
@@ -71,7 +70,7 @@ impl Parser {
                     // last
                     c.set_input(next_in.try_clone().unwrap());
                     c.set_out(unsafe {
-                        fs::File::from_raw_fd(dup(stdout().as_raw_fd()).unwrap())
+                        fs::File::from_raw_fd(dup(STDOUT_FILENO).unwrap())
                     });
                     let mut ini = vec![c];
                     ini.append(&mut self.set_pipe(next_in, commands));
