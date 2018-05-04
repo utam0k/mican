@@ -4,23 +4,23 @@ use std::ops::Not;
 pub struct History {
     pub list: VecDeque<String>,
     pub pos: usize,
-    prev: HistoryExec,
+    prev: HistoryCmd,
     first: Option<String>,
 }
 
 #[derive(PartialEq, Clone)]
-enum HistoryExec {
+enum HistoryCmd {
     Next,
     Prev,
 }
 
-impl Not for HistoryExec {
-    type Output = HistoryExec;
+impl Not for HistoryCmd {
+    type Output = HistoryCmd;
 
     fn not(self) -> Self {
         match self {
-            HistoryExec::Next => HistoryExec::Prev,
-            HistoryExec::Prev => HistoryExec::Next,
+            HistoryCmd::Next => HistoryCmd::Prev,
+            HistoryCmd::Prev => HistoryCmd::Next,
         }
     }
 }
@@ -30,19 +30,19 @@ impl History {
         History {
             list: VecDeque::new(),
             pos: 0,
-            prev: HistoryExec::Prev,
+            prev: HistoryCmd::Prev,
             first: None,
         }
     }
 
     pub fn reset(&mut self) {
         self.pos = 0;
-        self.prev = HistoryExec::Prev;
+        self.prev = HistoryCmd::Prev;
         self.first = None;
     }
 
     pub fn next(&mut self) -> Option<&String> {
-        if self.prev == HistoryExec::Prev {
+        if self.prev == HistoryCmd::Prev {
             self.prev = !self.prev.clone();
             if self.pos != 0 {
                 self.pos -= 1;
@@ -61,7 +61,7 @@ impl History {
     }
 
     pub fn prev(&mut self) -> Option<&String> {
-        if self.prev == HistoryExec::Next {
+        if self.prev == HistoryCmd::Next {
             self.prev = !self.prev.clone();
             if self.pos != 0 {
                 self.pos += 1;
