@@ -56,8 +56,7 @@ impl History {
             };
         }
         self.pos -= 1;
-        let ret = self.list.get(self.pos);
-        ret
+        self.list.get(self.pos)
     }
 
     pub fn prev(&mut self) -> Option<&String> {
