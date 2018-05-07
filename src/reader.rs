@@ -89,6 +89,9 @@ impl Reader {
                 self.term.move_to_end().unwrap();
                 return None;
             }
+            Some(Keybind::Something) => {
+                return None;
+            }
             None => {
                 self.term.put(String::from_utf8(ch).unwrap()).unwrap();
                 self.history.reset_first();
@@ -185,18 +188,44 @@ enum Keybind {
     BackwardChar,
     PreviousHistory,
     NextHistory,
+    // TODO
+    Something,
 }
 
 fn bindings() -> Vec<(Cow<'static, [u8]>, Keybind)> {
     vec![
-        (Cow::Borrowed(b"\r"), Keybind::Enter),
-        (Cow::Borrowed(b"\x7f"), Keybind::Delete),
-        (Cow::Borrowed(b"\x0c"), Keybind::CtrlL),
-        (Cow::Borrowed(b"\x1b[C"), Keybind::ForwardChar),
-        (Cow::Borrowed(b"\x1b[D"), Keybind::BackwardChar),
-        (Cow::Borrowed(b"\x1bOA"), Keybind::PreviousHistory),
-        (Cow::Borrowed(b"\x1bOB"), Keybind::NextHistory),
-        (Cow::Borrowed(b"\x1b[A"), Keybind::PreviousHistory),
-        (Cow::Borrowed(b"\x1b[B"), Keybind::NextHistory),
+        (Cow::Borrowed(b"\r"      ), Keybind::Enter),           // Enter
+        (Cow::Borrowed(b"\x7f"    ), Keybind::Delete),          // BackSpace
+        (Cow::Borrowed(b"\x1b[A"  ), Keybind::PreviousHistory), // Up
+        (Cow::Borrowed(b"\x1b[B"  ), Keybind::NextHistory),     // Down
+        (Cow::Borrowed(b"\x1b[C"  ), Keybind::ForwardChar),     // Left
+        (Cow::Borrowed(b"\x1b[D"  ), Keybind::BackwardChar),    // Right
+
+        (Cow::Borrowed(b"\x01"    ), Keybind::Something),       // Ctrl-A
+        (Cow::Borrowed(b"\x02"    ), Keybind::BackwardChar),    // Ctrl-B
+        (Cow::Borrowed(b"\x05"    ), Keybind::Something),       // Ctrl-E
+        (Cow::Borrowed(b"\x06"    ), Keybind::ForwardChar),     // Ctrl-F
+        (Cow::Borrowed(b"\x07"    ), Keybind::Something),       // Ctrl-G
+        (Cow::Borrowed(b"\x0a"    ), Keybind::Enter),           // Ctrl-J
+        (Cow::Borrowed(b"\x0b"    ), Keybind::Something),       // Ctrl-K
+        (Cow::Borrowed(b"\x0c"    ), Keybind::CtrlL),           // Ctrl-L
+        (Cow::Borrowed(b"\x0d"    ), Keybind::Enter),           // Ctrl-N
+        (Cow::Borrowed(b"\x0e"    ), Keybind::NextHistory),     // Ctrl-N
+        (Cow::Borrowed(b"\x10"    ), Keybind::PreviousHistory), // Ctrl-P
+        (Cow::Borrowed(b"\x12"    ), Keybind::Something),       // Ctrl-R
+        (Cow::Borrowed(b"\x14"    ), Keybind::Something),       // Ctrl-T
+        (Cow::Borrowed(b"\x19"    ), Keybind::Something),       // Ctrl-Y
+        (Cow::Borrowed(b"\x1d"    ), Keybind::Something),       // Ctrl-]
+        (Cow::Borrowed(b"\x1b\x08"), Keybind::Something),       // Escape, Ctrl-H
+        (Cow::Borrowed(b"\x1b\x1d"), Keybind::Something),       // Escape, Ctrl-]
+        (Cow::Borrowed(b"\x1b\x7f"), Keybind::Something),       // Escape, Rubout
+        (Cow::Borrowed(b"\x1bb"   ), Keybind::Something),       // Escape, b
+        (Cow::Borrowed(b"\x1bd"   ), Keybind::Something),       // Escape, d
+        (Cow::Borrowed(b"\x1bf"   ), Keybind::Something),       // Escape, f
+        (Cow::Borrowed(b"\x1bt"   ), Keybind::Something),       // Escape, t
+        (Cow::Borrowed(b"\x1by"   ), Keybind::Something),       // Escape, y
+        (Cow::Borrowed(b"\x1b#"   ), Keybind::Something),       // Escape, #
+        (Cow::Borrowed(b"\x1b<"   ), Keybind::Something),       // Escape, <
+        (Cow::Borrowed(b"\x1b>"   ), Keybind::Something),       // Escape, >
     ]
 }
