@@ -122,6 +122,11 @@ impl Term {
         self.move_to(1)
     }
 
+    pub fn move_to_end(&mut self) -> io::Result<()> {
+        let n = self.line.len();
+        self.move_to(n + 1)
+    }
+
     fn move_to(&mut self, n: usize) -> io::Result<()> {
         self.pos = n - 1;
         self.write(&format!("\x1b[{}G", self.prompt.len() + n))

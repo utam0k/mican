@@ -77,6 +77,7 @@ impl Reader {
                     None => return None,
                 };
                 self.term.rewrite(history).unwrap();
+                self.term.move_to_end().unwrap();
                 return None;
             }
             Some(Keybind::NextHistory) => {
@@ -85,6 +86,7 @@ impl Reader {
                     None => return None,
                 };
                 self.term.rewrite(history).unwrap();
+                self.term.move_to_end().unwrap();
                 return None;
             }
             None => {
