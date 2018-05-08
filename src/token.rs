@@ -44,15 +44,6 @@ impl Clone for Input {
     }
 }
 
-impl Input {
-    pub fn try_clone(&self) -> io::Result<Input> {
-        match *self {
-            Input::File(ref file) => Ok(Input::File(file.try_clone()?)),
-            Input::Stdin(_) => Ok(Input::Stdin(io::stdin())),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct CommandData {
     pub program: String,
