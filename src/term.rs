@@ -20,6 +20,20 @@ impl Term {
         self.line = String::new();
     }
 
+    pub fn put(&mut self, s: String) -> io::Result<()> {
+        if !self.is_last() {
+            self.line.insert_str(self.pos, &s);
+            let line = self.line.clone();
+            let old_pos = self.pos;
+            self.clear_to_screen_end()?;
+            self.write(&line.get(old_pos..).unwrap())?;
+            return self.move_to(old_pos + s.len() + 1);
+        } else {
+            self.line.insert_str(self.pos, &s);
+            return self.write_str(&s);
+        }
+    }
+
     pub fn delete(&mut self, n: usize) -> io::Result<()> {
         if self.is_start() {
             return Ok(());
@@ -34,20 +48,6 @@ impl Term {
             return self.move_to(pos + n);
         } else {
             return Ok(());
-        }
-    }
-
-    pub fn put(&mut self, s: String) -> io::Result<()> {
-        if !self.is_last() {
-            self.line.insert_str(self.pos, &s);
-            let line = self.line.clone();
-            let old_pos = self.pos;
-            self.clear_to_screen_end()?;
-            self.write(&line.get(old_pos..).unwrap())?;
-            return self.move_to(old_pos + s.len() + 1);
-        } else {
-            self.line.insert_str(self.pos, &s);
-            return self.write_str(&s);
         }
     }
 
@@ -138,5 +138,92 @@ impl Term {
 
     fn is_last(&self) -> bool {
         self.pos + 1 > self.line.len()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn setup() -> Term {
+        let mut term = Term::new("> ".into());
+        term.put("mican".into()).unwrap();
+        term
+    }
+
+    #[test]
+    fn test_put() {
+        let term = setup();
+        assert_eq!(term.line, "mican".to_string());
+        assert_eq!(term.pos, "mican".len());
+    }
+
+    #[test]
+    fn test_delete() {
+        let mut term = setup();
+        // TODO term.delete(2)
+        term.delete(1).unwrap();
+        assert_eq!(term.line, "mica");
+        term.delete(1).unwrap();
+        assert_eq!(term.line, "mic");
+    }
+
+    #[test]
+    fn test_is_start() {
+        let mut term = Term::new("> ".into());
+        assert!(term.is_start());
+        term.put("mican".into()).unwrap();
+        assert!(!term.is_start());
+        term.move_to_first().unwrap();
+        assert!(term.is_start());
+    }
+
+    #[test]
+    fn test_clear_line() {
+        let mut term = setup();
+        term.clear_line().unwrap();
+        assert_eq!(term.pos, "mican".len());
+        assert_eq!(term.line, "".to_string());
+    }
+
+    #[test]
+    fn test_clear_screen() {
+        let mut term = setup();
+        term.clear_screen().unwrap();
+        assert!(term.is_start());
+        assert_eq!(term.line, "mican".to_string());
+    }
+
+    #[test]
+    fn test_move_left() {
+        let mut term = setup();
+        term.move_left(1).unwrap();
+        assert_eq!(term.pos, "mican".len() - 1);
+        term.move_left(3).unwrap();
+        assert_eq!(term.pos, "mican".len() - 4);
+    }
+
+    #[test]
+    fn test_move_right() {
+        let mut term = setup();
+        term.move_right(1).unwrap();
+        assert_eq!(term.pos, "mican".len());
+        term.move_to_first().unwrap();
+        term.move_right(3).unwrap();
+        assert_eq!(term.pos, 3);
+    }
+
+    #[test]
+    fn test_move_to_first() {
+        let mut term = setup();
+        term.move_to_first().unwrap();
+        assert_eq!(term.pos, 0);
+    }
+
+    #[test]
+    fn test_move_to_end() {
+        let mut term = setup();
+        term.move_to_end().unwrap();
+        assert_eq!(term.pos, "mican".len());
     }
 }
