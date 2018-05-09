@@ -1,11 +1,6 @@
 use token::{CommandData, Input, Output};
 
-use nix::unistd::dup;
-use libc::STDOUT_FILENO;
-
 use std::process::{Command, Stdio};
-use std::os::unix::io::FromRawFd;
-use std::fs;
 
 pub fn run(cmd: CommandData) -> Result<(), String> {
     let mut output = match Command::new(&cmd.program)
@@ -17,9 +12,6 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
         .stdout(match cmd.out.unwrap() {
             Output::Stdout(_) => Stdio::inherit(),
             Output::File(output) => output.into(),
-        })
-        .stderr(unsafe {
-            fs::File::from_raw_fd(dup(STDOUT_FILENO).unwrap())
         })
         .spawn() {
         Ok(p) => p,
