@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
@@ -45,11 +45,61 @@ impl Clone for Input {
 }
 
 #[derive(Debug)]
+pub enum Output {
+    File(fs::File),
+    Stdout(io::Stdout),
+}
+
+impl From<io::Stdout> for Output {
+    fn from(output: io::Stdout) -> Self {
+        Output::Stdout(output)
+    }
+}
+
+impl From<fs::File> for Output {
+    fn from(output: fs::File) -> Self {
+        Output::File(output)
+    }
+}
+
+impl Write for Output {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        match *self {
+            Output::File(ref mut file) => file.write(buf),
+            Output::Stdout(ref mut stdout) => stdout.write(buf),
+        }
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+        match *self {
+            Output::File(ref mut file) => file.write_all(buf),
+            Output::Stdout(ref mut stdout) => stdout.write_all(buf),
+        }
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        match *self {
+            Output::File(ref mut file) => file.flush(),
+            Output::Stdout(ref mut stdout) => stdout.flush(),
+        }
+    }
+}
+
+impl Clone for Output {
+    fn clone(&self) -> Output {
+        match *self {
+            Output::File(ref file) => Output::File(file.try_clone().unwrap()),
+            Output::Stdout(_) => Output::Stdout(io::stdout()),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct CommandData {
     pub program: String,
     pub options: Vec<String>,
     pub input: Option<Input>,
-    pub out: Option<fs::File>,
+    pub out: Option<Output>,
 }
 
 impl PartialEq for CommandData {
@@ -59,8 +109,8 @@ impl PartialEq for CommandData {
 }
 
 impl CommandData {
-    pub fn set_out(&mut self, f: fs::File) {
-        self.out = Some(f);
+    pub fn set_out<T: Into<Output>>(&mut self, output: T) {
+        self.out = Some(output.into());
     }
 
     pub fn set_input<T: Into<Input>>(&mut self, f: T) {
