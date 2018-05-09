@@ -9,33 +9,19 @@ use std::fs;
 
 pub fn run(cmd: CommandData) -> Result<(), String> {
     let out = cmd.out.unwrap();
-    let mut output = match cmd.input.unwrap() {
-        Input::File(input) => {
-            match Command::new(&cmd.program)
-                .args(&cmd.options)
-                .stdin(input)
-                .stdout(out)
-                .stderr(unsafe {
-                    fs::File::from_raw_fd(dup(STDOUT_FILENO).unwrap())
-                })
-                .spawn() {
-                Ok(p) => p,
-                Err(e) => return Err(format!("{}", e)),
-            }
-        }
-        Input::Stdin(_) => {
-            match Command::new(&cmd.program)
-                .args(&cmd.options)
-                .stdin(Stdio::inherit())
-                .stdout(out)
-                .stderr(unsafe {
-                    fs::File::from_raw_fd(dup(STDOUT_FILENO).unwrap())
-                })
-                .spawn() {
-                Ok(p) => p,
-                Err(e) => return Err(format!("{}", e)),
-            }
-        }
+    let mut output = match Command::new(&cmd.program)
+        .args(&cmd.options)
+        .stdin(match cmd.input.unwrap() {
+            Input::Stdin(_) => Stdio::inherit(),
+            Input::File(input) => input.into(),
+        })
+        .stdout(out)
+        .stderr(unsafe {
+            fs::File::from_raw_fd(dup(STDOUT_FILENO).unwrap())
+        })
+        .spawn() {
+        Ok(p) => p,
+        Err(e) => return Err(format!("{}", e)),
     };
 
     match output.wait() {
