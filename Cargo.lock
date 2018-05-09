@@ -45,7 +45,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "mican"
 version = "0.2.0"
 dependencies = [
- "libc 0.2.40 (registry+https://github.com/rust-lang/crates.io-index)",
  "nix 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

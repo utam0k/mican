@@ -1,6 +1,6 @@
 use std::borrow::Cow;
-
-use libc::STDIN_FILENO;
+use std::io;
+use std::os::unix::io::AsRawFd;
 
 use nix;
 use nix::sys::termios::{tcgetattr, tcsetattr, SetArg, LocalFlags, InputFlags,
@@ -109,7 +109,7 @@ impl Reader {
 
         unsafe {
             buf.set_len(cap);
-            let result = retry(|| read(STDIN_FILENO, &mut buf[len..]));
+            let result = retry(|| read(io::stdout().as_raw_fd(), &mut buf[len..]));
 
             buf.set_len(len);
 
@@ -131,7 +131,8 @@ impl Reader {
 }
 
 fn settings_term() {
-    let old_tio = tcgetattr(STDIN_FILENO).unwrap();
+    let stdin_fileno = io::stdout().as_raw_fd();
+    let old_tio = tcgetattr(stdin_fileno).unwrap();
     let mut tio = old_tio;
 
     tio.input_flags.remove(
@@ -143,7 +144,7 @@ fn settings_term() {
     tio.control_chars[SpecialCharacterIndices::VMIN as usize] = 0;
     tio.control_chars[SpecialCharacterIndices::VTIME as usize] = 0;
 
-    tcsetattr(STDIN_FILENO, SetArg::TCSANOW, &tio).unwrap();
+    tcsetattr(stdin_fileno, SetArg::TCSANOW, &tio).unwrap();
 }
 
 fn retry<F, R>(mut f: F) -> nix::Result<R>
@@ -159,15 +160,16 @@ where
 }
 
 fn wait_input() -> bool {
+    let stdin_fileno = io::stdout().as_raw_fd();
     let mut r_fds = FdSet::new();
-    r_fds.insert(STDIN_FILENO);
+    r_fds.insert(stdin_fileno);
 
     let mut e_fds = FdSet::new();
-    r_fds.insert(STDIN_FILENO);
+    r_fds.insert(stdin_fileno);
 
     loop {
         match select(
-            STDIN_FILENO + 1,
+            stdin_fileno + 1,
             Some(&mut r_fds),
             None,
             Some(&mut e_fds),
