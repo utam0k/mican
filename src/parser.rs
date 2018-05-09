@@ -1,5 +1,4 @@
-use nix::unistd::{dup, pipe};
-use libc::STDOUT_FILENO;
+use nix::unistd::pipe;
 
 use token::{CommandData, Token, Input};
 
@@ -63,9 +62,7 @@ impl Parser {
                     ini
                 } else {
                     c.set_input(next_in.clone());
-                    c.set_out(unsafe {
-                        fs::File::from_raw_fd(dup(STDOUT_FILENO).unwrap())
-                    });
+                    c.set_out(io::stdout());
                     let mut ini = vec![c];
                     ini.append(&mut self.set_pipe(next_in, commands));
                     ini
