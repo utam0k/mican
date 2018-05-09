@@ -11,11 +11,12 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
 #[test]
 fn test_bye_run() {
     use std::fs::File;
+    use token::Output;
 
     let cmd = CommandData {
         program: "clear".to_string(),
         options: vec![],
-        out: Some(File::create("/dev/null").unwrap()),
+        out: Some(Output::from(File::create("/dev/null").unwrap())),
         input: None,
     };
 
