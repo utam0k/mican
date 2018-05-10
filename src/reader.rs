@@ -10,11 +10,13 @@ use nix::unistd::read;
 
 use term::Term;
 use history::History;
+use completer::Completer;
 
 pub struct Reader {
     term: Term,
     history: History,
     bindings: Vec<(Cow<'static, [u8]>, Keybind)>,
+    completer: Completer,
 }
 
 impl Reader {
@@ -24,6 +26,7 @@ impl Reader {
             term: Term::new(prompt),
             history: History::new(),
             bindings: bindings(),
+            completer: Completer::new(),
         }
     }
 
@@ -54,6 +57,18 @@ impl Reader {
                 self.history.push(result.clone());
                 self.history.reset();
                 return Ok(Some(result));
+            }
+            Some(Keybind::Complete) => {
+                if self.term.line.trim().len() < 1 {
+                    self.term.put("\t".into())?;
+                } else {
+                    let result = self.completer.complete(&self.term.line);
+                    if result.len() > 0 {
+                        self.term.rewrite(result.first().unwrap())?;
+                        self.term.move_to_end()?;
+                    }
+                }
+                return Ok(None);
             }
             Some(Keybind::CtrlL) => {
                 self.term.clear_screen()?;
@@ -197,6 +212,7 @@ fn wait_input() -> bool {
 enum Keybind {
     Enter,
     Delete,
+    Complete,
     CtrlL,
     ForwardChar,
     BackwardChar,
@@ -216,6 +232,8 @@ fn bindings() -> Vec<(Cow<'static, [u8]>, Keybind)> {
         (Cow::Borrowed(b"\x1b[B"  ), Keybind::NextHistory),     // Down
         (Cow::Borrowed(b"\x1b[C"  ), Keybind::ForwardChar),     // Left
         (Cow::Borrowed(b"\x1b[D"  ), Keybind::BackwardChar),    // Right
+
+        (Cow::Borrowed(b"\t"      ), Keybind::Complete),        // Tab
 
         (Cow::Borrowed(b"\x01"    ), Keybind::BeginningOFLine), // Ctrl-A
         (Cow::Borrowed(b"\x02"    ), Keybind::BackwardChar),    // Ctrl-B
