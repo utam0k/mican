@@ -34,7 +34,7 @@ impl Reader {
                 let mut ch: Vec<u8> = Vec::new();
                 let _ = self.read_char(&mut ch).unwrap();
                 let res = self.find_bind(&ch);
-                if let Some(line) = self.execute_sequence(res, ch).unwrap() {
+                if let Ok(Some(line)) = self.execute_sequence(res, ch) {
                     return line;
                 }
             }
