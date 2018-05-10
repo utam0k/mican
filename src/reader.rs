@@ -89,6 +89,14 @@ impl Reader {
                 self.term.move_to_end().unwrap();
                 return None;
             }
+            Some(Keybind::BeginningOFLine) => {
+                self.term.move_to_first().unwrap();
+                return None;
+            }
+            Some(Keybind::EndOfLine) => {
+                self.term.move_to_end().unwrap();
+                return None;
+            }
             Some(Keybind::Something) => {
                 return None;
             }
@@ -190,6 +198,8 @@ enum Keybind {
     BackwardChar,
     PreviousHistory,
     NextHistory,
+    BeginningOFLine,
+    EndOfLine,
     // TODO
     Something,
 }
@@ -203,9 +213,9 @@ fn bindings() -> Vec<(Cow<'static, [u8]>, Keybind)> {
         (Cow::Borrowed(b"\x1b[C"  ), Keybind::ForwardChar),     // Left
         (Cow::Borrowed(b"\x1b[D"  ), Keybind::BackwardChar),    // Right
 
-        (Cow::Borrowed(b"\x01"    ), Keybind::Something),       // Ctrl-A
+        (Cow::Borrowed(b"\x01"    ), Keybind::BeginningOFLine), // Ctrl-A
         (Cow::Borrowed(b"\x02"    ), Keybind::BackwardChar),    // Ctrl-B
-        (Cow::Borrowed(b"\x05"    ), Keybind::Something),       // Ctrl-E
+        (Cow::Borrowed(b"\x05"    ), Keybind::EndOfLine),       // Ctrl-E
         (Cow::Borrowed(b"\x06"    ), Keybind::ForwardChar),     // Ctrl-F
         (Cow::Borrowed(b"\x07"    ), Keybind::Something),       // Ctrl-G
         (Cow::Borrowed(b"\x0a"    ), Keybind::Enter),           // Ctrl-J
