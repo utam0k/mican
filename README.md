@@ -31,9 +31,10 @@ $ cargo run
 ## Features
 - [x] Pipe
 - [x] Multi process
-- [ ] Non-canonical
-- [ ] Redirection
+- [x] Input Reader  
+    There is a key binding which is not supported.
 - [ ] History
+- [ ] Redirection
 - [ ] Variable
 - [ ] RC file
 
