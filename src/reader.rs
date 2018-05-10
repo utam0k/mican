@@ -34,39 +34,43 @@ impl Reader {
                 let mut ch: Vec<u8> = Vec::new();
                 let _ = self.read_char(&mut ch).unwrap();
                 let res = self.find_bind(&ch);
-                if let Some(line) = self.execute_sequence(res, ch) {
+                if let Some(line) = self.execute_sequence(res, ch).unwrap() {
                     return line;
                 }
             }
         }
     }
 
-    fn execute_sequence(&mut self, res: Option<Keybind>, ch: Vec<u8>) -> Option<String> {
+    fn execute_sequence(
+        &mut self,
+        res: Option<Keybind>,
+        ch: Vec<u8>,
+    ) -> io::Result<Option<String>> {
         match res {
             Some(Keybind::Enter) => {
                 let result = self.term.line.clone();
                 self.term.reset();
-                self.term.new_line().unwrap();
+                self.term.new_line()?;
                 self.history.push(result.clone());
                 self.history.reset();
-                return Some(result);
+                return Ok(Some(result));
             }
             Some(Keybind::CtrlL) => {
-                self.term.clear_screen().unwrap();
-                self.term.write_line().unwrap();
-                return None;
+                self.term.clear_screen()?;
+                self.term.write_line()?;
+                return Ok(None);
             }
             Some(Keybind::Delete) => {
-                self.term.delete(1).unwrap();
-                return None;
+                self.term.delete(1)?;
+                return Ok(None);
             }
             Some(Keybind::ForwardChar) => {
-                self.term.move_right(1).unwrap();
-                return None;
+                self.term.move_right(1)?;
+                return Ok(None);
             }
             Some(Keybind::BackwardChar) => {
-                self.term.move_left(1).unwrap();
-                return None;
+                self.term.move_left(1)?;
+                return Ok(None);
             }
             Some(Keybind::PreviousHistory) => {
                 if self.history.is_started() {
@@ -74,36 +78,36 @@ impl Reader {
                 }
                 let history = match self.history.prev() {
                     Some(h) => h,
-                    None => return None,
+                    None => return Ok(None),
                 };
-                self.term.rewrite(history).unwrap();
-                self.term.move_to_end().unwrap();
-                return None;
+                self.term.rewrite(history)?;
+                self.term.move_to_end()?;
+                return Ok(None);
             }
             Some(Keybind::NextHistory) => {
                 let history = match self.history.next() {
                     Some(h) => h,
-                    None => return None,
+                    None => return Ok(None),
                 };
-                self.term.rewrite(history).unwrap();
-                self.term.move_to_end().unwrap();
-                return None;
+                self.term.rewrite(history)?;
+                self.term.move_to_end()?;
+                return Ok(None);
             }
             Some(Keybind::BeginningOFLine) => {
-                self.term.move_to_first().unwrap();
-                return None;
+                self.term.move_to_first()?;
+                return Ok(None);
             }
             Some(Keybind::EndOfLine) => {
-                self.term.move_to_end().unwrap();
-                return None;
+                self.term.move_to_end()?;
+                return Ok(None);
             }
             Some(Keybind::Something) => {
-                return None;
+                return Ok(None);
             }
             None => {
-                self.term.put(String::from_utf8(ch).unwrap()).unwrap();
+                self.term.put(String::from_utf8(ch).unwrap())?;
                 self.history.reset_first();
-                return None;
+                return Ok(None);
             }
         }
     }
