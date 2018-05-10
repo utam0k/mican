@@ -34,6 +34,7 @@ $ cargo run
 - [x] Input Reader  
     There is a key binding which is not supported.
 - [ ] History
+- [ ] Completion
 - [ ] Redirection
 - [ ] Variable
 - [ ] RC file
