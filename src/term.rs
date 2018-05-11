@@ -38,6 +38,18 @@ impl Term {
         if self.is_start() {
             return Ok(());
         }
+
+        let delete_range = self.pos - 1..self.pos + n - 1;
+        if let Some(first_tab_index) = self.line[delete_range].find('\t') {
+            if let Some(last_tab_index) = self.line.rfind('\t') {
+                if first_tab_index == last_tab_index {
+                    self.move_left_only(5)?;
+                } else {
+                    self.move_left_only(7)?;
+                }
+            }
+        }
+
         self.line.remove(self.pos - n);
         self.move_left(n)?;
         self.clear_to_screen_end()?;
@@ -107,6 +119,10 @@ impl Term {
             return Ok(());
         }
         self.pos -= n;
+        self.write(&format!("\x1b[{}D", n))
+    }
+
+    fn move_left_only(&mut self, n: usize) -> io::Result<()> {
         self.write(&format!("\x1b[{}D", n))
     }
 
