@@ -66,7 +66,7 @@ impl Term {
     }
 
     pub fn rewrite(&mut self, s: &str) -> io::Result<()> {
-        self.clear_line().unwrap();
+        self.clear_line()?;
         self.line = s.to_string();
         self.write_line()
     }
