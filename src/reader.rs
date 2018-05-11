@@ -67,6 +67,9 @@ impl Reader {
                         self.term.rewrite(result.first().unwrap())?;
                         self.term.move_to_end()?;
                     }
+
+                    self.completer.show()?;
+                    self.term.move_to_end()?;
                 }
                 return Ok(None);
             }

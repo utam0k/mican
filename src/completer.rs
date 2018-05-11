@@ -2,15 +2,24 @@ use std::env;
 use std::collections::HashSet;
 use std::fs::read_dir;
 use std::path::is_separator;
+use std::io;
 
-pub struct Completer {}
+use term::Term;
+
+pub struct Completer {
+    term: Term,
+    result: Vec<String>,
+}
 
 impl Completer {
     pub fn new() -> Self {
-        Completer {}
+        Completer {
+            term: Term::new("".into()),
+            result: Vec::new(),
+        }
     }
 
-    pub fn complete(&self, path: &str) -> Vec<String> {
+    pub fn complete(&mut self, path: &str) -> Vec<String> {
         let (_, fname) = match path.rfind(is_separator) {
             Some(pos) => (Some(&path[..pos + 1]), &path[pos + 1..]),
             None => (None, path),
@@ -34,6 +43,13 @@ impl Completer {
                 }
             }
         }
+        self.result = result.clone();
         result
+    }
+
+    pub fn show(&mut self) -> io::Result<()> {
+        self.term.new_line()?;
+        self.term.write_str(&self.result.join(" "))?;
+        self.term.write_str("\x1b[1A")
     }
 }
