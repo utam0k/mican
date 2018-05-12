@@ -77,7 +77,12 @@ impl Term {
         self.write(s)
     }
 
-    pub fn rewrite(&mut self, s: &str) -> io::Result<()> {
+    pub fn come_back(&mut self) -> io::Result<()> {
+        let pos = self.pos.clone();
+        self.move_to(pos)
+    }
+
+    pub fn replace(&mut self, s: &str) -> io::Result<()> {
         self.clear_line().unwrap();
         self.line = s.to_string();
         self.write_line()
@@ -132,6 +137,10 @@ impl Term {
         }
         self.pos += n;
         self.write(&format!("\x1b[{}C", n))
+    }
+
+    pub fn move_down(&mut self, n: usize) -> io::Result<()> {
+        self.write(&format!("\x1b[{}A", n))
     }
 
     pub fn move_to_first(&mut self) -> io::Result<()> {

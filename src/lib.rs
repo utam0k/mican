@@ -6,5 +6,6 @@ pub mod reader;
 pub mod term;
 pub mod history;
 pub mod completer;
+pub mod cursor;
 
 extern crate nix;

@@ -50,79 +50,96 @@ impl Reader {
         ch: Vec<u8>,
     ) -> io::Result<Option<String>> {
         match res {
-            Some(Keybind::Enter) => {
-                let result = self.term.line.clone();
-                self.term.reset();
-                self.term.new_line()?;
-                self.history.push(result.clone());
-                self.history.reset();
-                return Ok(Some(result));
-            }
             Some(Keybind::Complete) => {
-                if self.term.line.trim().len() < 1 {
-                    self.term.put("\t".into())?;
+                if self.term.line.trim().len() != self.term.line.len() {
+                    // TODO
+                    // self.term.put("\t".into())?;
+                    return Ok(None);
+                } else if self.term.line.trim().len() < 1 {
+                    // self.term.put("\t".into())?;
+                    return Ok(None);
                 } else {
-                    let result = self.completer.complete(&self.term.line);
-                    if result.len() > 0 {
-                        self.term.rewrite(result.first().unwrap())?;
-                        self.term.move_to_end()?;
+                    self.completer.complete(&self.term.line);
+                    if !self.completer.is_empty() {
+                        if let Some(cmd) = self.completer.next() {
+                            self.term.replace(cmd)?;
+                            self.term.move_to_end()?;
+                        }
                     }
-
                     self.completer.show()?;
+
                     self.term.move_to_end()?;
                 }
                 return Ok(None);
             }
-            Some(Keybind::CtrlL) => {
-                self.term.clear_screen()?;
-                self.term.write_line()?;
-                return Ok(None);
-            }
-            Some(Keybind::Delete) => {
-                self.term.delete(1)?;
-                return Ok(None);
-            }
-            Some(Keybind::ForwardChar) => {
-                self.term.move_right(1)?;
-                return Ok(None);
-            }
-            Some(Keybind::BackwardChar) => {
-                self.term.move_left(1)?;
-                return Ok(None);
-            }
-            Some(Keybind::PreviousHistory) => {
-                if self.history.is_started() {
-                    self.history.set_first(self.term.line.clone());
+            Some(keybind) => {
+                match keybind {
+                    Keybind::Enter => {
+                        let result = self.term.line.clone();
+                        self.term.reset();
+                        self.term.new_line()?;
+                        self.history.push(result.clone());
+                        self.history.reset();
+                        return Ok(Some(result));
+                    }
+                    Keybind::CtrlL => {
+                        self.term.clear_screen()?;
+                        self.term.write_line()?;
+                        return Ok(None);
+                    }
+                    Keybind::Delete => {
+                        self.term.delete(1)?;
+                        return Ok(None);
+                    }
+                    Keybind::ForwardChar => {
+                        self.term.move_right(1)?;
+                        return Ok(None);
+                    }
+                    Keybind::BackwardChar => {
+                        self.term.move_left(1)?;
+                        return Ok(None);
+                    }
+                    Keybind::PreviousHistory => {
+                        if self.history.is_started() {
+                            self.history.set_first(self.term.line.clone());
+                        }
+                        let history = match self.history.prev() {
+                            Some(h) => h,
+                            None => return Ok(None),
+                        };
+                        self.term.replace(history)?;
+                        self.term.move_to_end()?;
+                        return Ok(None);
+                    }
+                    Keybind::NextHistory => {
+                        let history = match self.history.next() {
+                            Some(h) => h,
+                            None => return Ok(None),
+                        };
+                        self.term.replace(history)?;
+                        self.term.move_to_end()?;
+                        return Ok(None);
+                    }
+                    Keybind::BeginningOFLine => {
+                        self.term.move_to_first()?;
+                        return Ok(None);
+                    }
+                    Keybind::EndOfLine => {
+                        self.term.move_to_end()?;
+                        return Ok(None);
+                    }
+                    _ => {
+                        return Ok(None);
+                    }
                 }
-                let history = match self.history.prev() {
-                    Some(h) => h,
-                    None => return Ok(None),
-                };
-                self.term.rewrite(history)?;
-                self.term.move_to_end()?;
-                return Ok(None);
-            }
-            Some(Keybind::NextHistory) => {
-                let history = match self.history.next() {
-                    Some(h) => h,
-                    None => return Ok(None),
-                };
-                self.term.rewrite(history)?;
-                self.term.move_to_end()?;
-                return Ok(None);
-            }
-            Some(Keybind::BeginningOFLine) => {
-                self.term.move_to_first()?;
-                return Ok(None);
-            }
-            Some(Keybind::EndOfLine) => {
-                self.term.move_to_end()?;
-                return Ok(None);
-            }
-            Some(Keybind::Something) => {
-                return Ok(None);
             }
             None => {
+                if !self.completer.is_empty() {
+                    self.completer.clear();
+                    self.term.come_back()?;
+                }
+                self.term.move_to_end()?;
+
                 self.term.put(String::from_utf8(ch).unwrap())?;
                 self.history.reset_first();
                 return Ok(None);
