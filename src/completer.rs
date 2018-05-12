@@ -3,30 +3,25 @@ use std::collections::HashSet;
 use std::fs::read_dir;
 use std::path::is_separator;
 use std::io;
+use std::io::Write;
 
-use term::Term;
 use cursor::unix_cursor;
 
 pub struct Completer {
-    term: Term,
     pub result: Option<Vec<String>>,
     n: usize,
 }
 
 impl Completer {
     pub fn new() -> Self {
-        Completer {
-            term: Term::new("".into()),
-            result: None,
-            n: 0,
-        }
+        Completer { result: None, n: 0 }
     }
 
     pub fn clear(&mut self) {
         self.n = 0;
         if self.result.is_some() {
             unix_cursor::move_under_line_first(1).unwrap();
-            self.term.clear_to_screen_end().unwrap();
+            unix_cursor::clear_to_screen_end().unwrap();
             // TODO
             unix_cursor::move_up(1).unwrap();
         }
@@ -65,7 +60,11 @@ impl Completer {
     }
 
     pub fn show(&mut self) -> io::Result<()> {
-        self.term.new_line()?;
+        let stdout = io::stdout();
+        let mut lock = stdout.lock();
+
+        unix_cursor::move_under_line_first(1)?;
+
         let mut line = String::new();
         for (i, completion) in self.result.clone().unwrap().iter().enumerate() {
             if i + 1 == self.n {
@@ -75,9 +74,11 @@ impl Completer {
             }
         }
 
-        self.term.write_str(&line)?;
+        lock.write_all(&line.as_bytes())?;
+        lock.flush()?;
+
         // TODO
-        self.term.move_down(1)
+        unix_cursor::move_up(1)
     }
 
     pub fn next(&mut self) -> Option<&String> {

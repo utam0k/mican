@@ -10,12 +10,13 @@ trait Cursor {
     fn move_right(dst: impl io::Write, n: usize) -> io::Result<()>;
 }
 
-// pub struct UnixCursor {}
-
-// impl Cursor for UnixCursor {
 pub mod unix_cursor {
     use std::io;
     use std::io::Write;
+
+    pub fn move_to(n: usize) -> io::Result<()> {
+        write(&format!("\x1b[{}G", n))
+    }
 
     pub fn move_up(n: usize) -> io::Result<()> {
         write(&format!("\x1b[{}A", n))

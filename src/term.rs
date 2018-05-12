@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 
+use cursor::unix_cursor;
+
 pub struct Term {
     pub pos: usize,
     pub prompt: String,
@@ -43,9 +45,9 @@ impl Term {
         if let Some(first_tab_index) = self.line[delete_range].find('\t') {
             if let Some(last_tab_index) = self.line.rfind('\t') {
                 if first_tab_index == last_tab_index {
-                    self.move_left_only(5)?;
+                    unix_cursor::move_left(5)?;
                 } else {
-                    self.move_left_only(7)?;
+                    unix_cursor::move_left(7)?;
                 }
             }
         }
@@ -120,7 +122,7 @@ impl Term {
     }
 
     pub fn clear_to_screen_end(&self) -> io::Result<()> {
-        self.write("\x1b[J")
+        unix_cursor::clear_to_screen_end()
     }
 
     pub fn move_left(&mut self, n: usize) -> io::Result<()> {
@@ -128,11 +130,7 @@ impl Term {
             return Ok(());
         }
         self.pos -= n;
-        self.write(&format!("\x1b[{}D", n))
-    }
-
-    fn move_left_only(&mut self, n: usize) -> io::Result<()> {
-        self.write(&format!("\x1b[{}D", n))
+        unix_cursor::move_left(n)
     }
 
     pub fn move_right(&mut self, n: usize) -> io::Result<()> {
@@ -140,11 +138,11 @@ impl Term {
             return Ok(());
         }
         self.pos += n;
-        self.write(&format!("\x1b[{}C", n))
+        unix_cursor::move_right(n)
     }
 
     pub fn move_down(&mut self, n: usize) -> io::Result<()> {
-        self.write(&format!("\x1b[{}A", n))
+        unix_cursor::move_down(n)
     }
 
     pub fn move_to_first(&mut self) -> io::Result<()> {
@@ -158,7 +156,7 @@ impl Term {
 
     fn move_to(&mut self, n: usize) -> io::Result<()> {
         self.pos = n - 1;
-        self.write(&format!("\x1b[{}G", self.prompt.len() + n))
+        unix_cursor::move_to(self.prompt.len() + n)
     }
 
     fn is_start(&self) -> bool {
