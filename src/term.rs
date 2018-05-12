@@ -80,7 +80,7 @@ impl Term {
     pub fn come_back(&mut self) -> io::Result<()> {
         if self.pos != 0 {
             let pos = self.pos.clone();
-            self.move_to(pos)
+            self.move_to(pos + 1)
         } else {
             self.move_to_first()
         }
