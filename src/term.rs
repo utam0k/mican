@@ -78,8 +78,12 @@ impl Term {
     }
 
     pub fn come_back(&mut self) -> io::Result<()> {
-        let pos = self.pos.clone();
-        self.move_to(pos)
+        if self.pos != 0 {
+            let pos = self.pos.clone();
+            self.move_to(pos)
+        } else {
+            self.move_to_first()
+        }
     }
 
     pub fn replace(&mut self, s: &str) -> io::Result<()> {
