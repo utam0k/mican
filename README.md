@@ -34,7 +34,8 @@ $ cargo run
 - [x] Completion
 - [x] Input Reader  
     There is a key binding which is not supported.
-- [ ] History
+- [x] History  
+    This history function is only a temporary record that is still running.
 - [ ] Redirection
 - [ ] Variable
 - [ ] RC file
