@@ -74,6 +74,7 @@ impl Reader {
             }
             Some(Keybind::Enter) => {
                 let result = self.term.line.clone();
+                self.completer.clear();
                 self.term.reset();
                 self.term.new_line()?;
                 self.history.push(result.clone());

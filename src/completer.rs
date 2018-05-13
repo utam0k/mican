@@ -4,25 +4,32 @@ use std::fs::read_dir;
 use std::path::is_separator;
 use std::io;
 use std::io::Write;
+use std::os::unix::io::AsRawFd;
+use std::iter::Iterator;
 
 use cursor::unix_cursor;
 
 pub struct Completer {
     pub result: Option<Vec<String>>,
     n: usize,
+    height: usize,
 }
 
 impl Completer {
     pub fn new() -> Self {
-        Completer { result: None, n: 0 }
+        Completer {
+            result: None,
+            n: 0,
+            height: 0,
+        }
     }
 
     pub fn clear(&mut self) {
         self.n = 0;
+        self.height = 0;
         if self.result.is_some() {
             unix_cursor::move_under_line_first(1).unwrap();
             unix_cursor::clear_to_screen_end().unwrap();
-            // TODO
             unix_cursor::move_up(1).unwrap();
         }
         self.result = None;
@@ -56,6 +63,11 @@ impl Completer {
                 }
             }
         }
+        self.height = result.join(" ").len() /
+            unix_cursor::get_winsize(io::stdout().as_raw_fd())
+                .unwrap()
+                .ws_col as usize + 1;
+
         self.result = Some(result.clone());
     }
 
@@ -77,8 +89,7 @@ impl Completer {
         lock.write_all(&line.as_bytes())?;
         lock.flush()?;
 
-        // TODO
-        unix_cursor::move_up(1)
+        unix_cursor::move_up(self.height)
     }
 
     pub fn next(&mut self) -> Option<&String> {
