@@ -32,6 +32,7 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
             out.write_all("\n".as_bytes()).unwrap();
             break;
         }
+        out.flush().unwrap();
     }
     return Ok(());
 }

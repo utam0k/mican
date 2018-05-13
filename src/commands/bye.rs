@@ -13,6 +13,7 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
         Ok(_) => {
             // TODO
             // kill(getppid(), Signal::SIGCHLD).unwrap();
+            out.flush().unwrap();
             kill(getppid(), Signal::SIGINT).unwrap();
             exit(0);
         }
