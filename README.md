@@ -31,10 +31,10 @@ $ cargo run
 ## Features
 - [x] Pipe
 - [x] Multi process
+- [x] Completion
 - [x] Input Reader  
     There is a key binding which is not supported.
 - [ ] History
-- [ ] Completion
 - [ ] Redirection
 - [ ] Variable
 - [ ] RC file
