@@ -8,12 +8,12 @@ use nix::sys::termios::{tcgetattr, tcsetattr, SetArg, LocalFlags, InputFlags,
 use nix::sys::select::{select, FdSet};
 use nix::unistd::read;
 
-use term::Term;
+use editor::Editor;
 use history::History;
 use completer::Completer;
 
 pub struct Reader {
-    term: Term,
+    ed: Editor,
     history: History,
     bindings: Vec<(Cow<'static, [u8]>, Keybind)>,
     completer: Completer,
@@ -23,7 +23,7 @@ impl Reader {
     pub fn new(prompt: String) -> Self {
         settings_term();
         Reader {
-            term: Term::new(prompt),
+            ed: Editor::new(prompt),
             history: History::new(),
             bindings: bindings(),
             completer: Completer::new(),
@@ -31,7 +31,7 @@ impl Reader {
     }
 
     pub fn read_line(&mut self) -> String {
-        self.term.write_prompt().unwrap();
+        self.ed.write_prompt().unwrap();
         loop {
             if wait_input() {
                 let mut ch: Vec<u8> = Vec::new();
@@ -51,92 +51,92 @@ impl Reader {
     ) -> io::Result<Option<String>> {
         match res {
             Some(Keybind::Complete) => {
-                if self.term.line.trim().len() != self.term.line.len() {
+                if self.ed.line.trim().len() != self.ed.line.len() {
                     // TODO
-                    // self.term.put("\t".into())?;
+                    // self.ed.put("\t".into())?;
                     return Ok(None);
-                } else if self.term.line.trim().len() < 1 {
-                    // self.term.put("\t".into())?;
+                } else if self.ed.line.trim().len() < 1 {
+                    // self.ed.put("\t".into())?;
                     return Ok(None);
                 } else {
-                    self.completer.complete(&self.term.line);
+                    self.completer.complete(&self.ed.line);
                     if !self.completer.is_empty() {
                         if let Some(cmd) = self.completer.next() {
-                            self.term.replace(cmd)?;
-                            self.term.move_to_end()?;
+                            self.ed.replace(cmd)?;
+                            self.ed.move_to_end()?;
                         }
                     }
                     self.completer.show()?;
 
-                    self.term.move_to_end()?;
+                    self.ed.move_to_end()?;
                 }
                 return Ok(None);
             }
             Some(Keybind::Enter) => {
-                let result = self.term.line.clone();
+                let result = self.ed.line.clone();
                 self.completer.clear();
-                self.term.reset();
-                self.term.new_line()?;
+                self.ed.reset();
+                self.ed.new_line()?;
                 self.history.push(result.clone());
                 self.history.reset();
                 return Ok(Some(result));
             }
             Some(Keybind::CtrlL) => {
-                self.term.clear_screen()?;
-                self.term.write_line()?;
+                self.ed.clear_screen()?;
+                self.ed.write_line()?;
                 return Ok(None);
             }
             Some(Keybind::Delete) => {
                 if !self.completer.is_empty() {
                     self.completer.clear();
-                    self.term.come_back()?;
+                    self.ed.come_back()?;
                 }
-                self.term.delete(1)?;
+                self.ed.delete(1)?;
                 return Ok(None);
             }
             Some(Keybind::ForwardChar) => {
-                self.term.move_right(1)?;
+                self.ed.move_right(1)?;
                 return Ok(None);
             }
             Some(Keybind::BackwardChar) => {
-                self.term.move_left(1)?;
+                self.ed.move_left(1)?;
                 return Ok(None);
             }
             Some(Keybind::PreviousHistory) => {
                 if !self.completer.is_empty() {
                     self.completer.clear();
-                    self.term.come_back()?;
+                    self.ed.come_back()?;
                 }
                 if self.history.is_started() {
-                    self.history.set_first(self.term.line.clone());
+                    self.history.set_first(self.ed.line.clone());
                 }
                 let history = match self.history.prev() {
                     Some(h) => h,
                     None => return Ok(None),
                 };
-                self.term.replace(history)?;
-                self.term.move_to_end()?;
+                self.ed.replace(history)?;
+                self.ed.move_to_end()?;
                 return Ok(None);
             }
             Some(Keybind::NextHistory) => {
                 if !self.completer.is_empty() {
                     self.completer.clear();
-                    self.term.come_back()?;
+                    self.ed.come_back()?;
                 }
                 let history = match self.history.next() {
                     Some(h) => h,
                     None => return Ok(None),
                 };
-                self.term.replace(history)?;
-                self.term.move_to_end()?;
+                self.ed.replace(history)?;
+                self.ed.move_to_end()?;
                 return Ok(None);
             }
             Some(Keybind::BeginningOFLine) => {
-                self.term.move_to_first()?;
+                self.ed.move_to_first()?;
                 return Ok(None);
             }
             Some(Keybind::EndOfLine) => {
-                self.term.move_to_end()?;
+                self.ed.move_to_end()?;
                 return Ok(None);
             }
             Some(Keybind::Something) => {
@@ -145,10 +145,10 @@ impl Reader {
             None => {
                 if !self.completer.is_empty() {
                     self.completer.clear();
-                    self.term.come_back()?;
+                    self.ed.come_back()?;
                 }
 
-                self.term.put(String::from_utf8(ch).unwrap())?;
+                self.ed.put(String::from_utf8(ch).unwrap())?;
                 self.history.reset_first();
                 return Ok(None);
             }

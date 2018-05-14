@@ -2,15 +2,15 @@ use std::io::{self, Write};
 
 use cursor::unix_cursor;
 
-pub struct Term {
+pub struct Editor {
     pub pos: usize,
     pub prompt: String,
     pub line: String,
 }
 
-impl Term {
-    pub fn new(prompt: String) -> Term {
-        Term {
+impl Editor {
+    pub fn new(prompt: String) -> Editor {
+        Editor {
             pos: 0,
             prompt: prompt,
             line: String::new(),
@@ -172,85 +172,85 @@ impl Term {
 mod test {
     use super::*;
 
-    fn setup() -> Term {
-        let mut term = Term::new("> ".into());
-        term.put("mican".into()).unwrap();
-        term
+    fn setup() -> Editor {
+        let mut ed = Editor::new("> ".into());
+        ed.put("mican".into()).unwrap();
+        ed
     }
 
     #[test]
     fn test_put() {
-        let term = setup();
-        assert_eq!(term.line, "mican".to_string());
-        assert_eq!(term.pos, "mican".len());
+        let ed = setup();
+        assert_eq!(ed.line, "mican".to_string());
+        assert_eq!(ed.pos, "mican".len());
     }
 
     #[test]
     fn test_delete() {
-        let mut term = setup();
-        // TODO term.delete(2)
-        term.delete(1).unwrap();
-        assert_eq!(term.line, "mica");
-        term.delete(1).unwrap();
-        assert_eq!(term.line, "mic");
+        let mut ed = setup();
+        // TODO ed.delete(2)
+        ed.delete(1).unwrap();
+        assert_eq!(ed.line, "mica");
+        ed.delete(1).unwrap();
+        assert_eq!(ed.line, "mic");
     }
 
     #[test]
     fn test_is_start() {
-        let mut term = Term::new("> ".into());
-        assert!(term.is_start());
-        term.put("mican".into()).unwrap();
-        assert!(!term.is_start());
-        term.move_to_first().unwrap();
-        assert!(term.is_start());
+        let mut ed = Editor::new("> ".into());
+        assert!(ed.is_start());
+        ed.put("mican".into()).unwrap();
+        assert!(!ed.is_start());
+        ed.move_to_first().unwrap();
+        assert!(ed.is_start());
     }
 
     #[test]
     fn test_clear_line() {
-        let mut term = setup();
-        term.clear_line().unwrap();
-        assert_eq!(term.pos, "mican".len());
-        assert_eq!(term.line, "".to_string());
+        let mut ed = setup();
+        ed.clear_line().unwrap();
+        assert_eq!(ed.pos, "mican".len());
+        assert_eq!(ed.line, "".to_string());
     }
 
     #[test]
     fn test_clear_screen() {
-        let mut term = setup();
-        term.clear_screen().unwrap();
-        assert!(term.is_start());
-        assert_eq!(term.line, "mican".to_string());
+        let mut ed = setup();
+        ed.clear_screen().unwrap();
+        assert!(ed.is_start());
+        assert_eq!(ed.line, "mican".to_string());
     }
 
     #[test]
     fn test_move_left() {
-        let mut term = setup();
-        term.move_left(1).unwrap();
-        assert_eq!(term.pos, "mican".len() - 1);
-        term.move_left(3).unwrap();
-        assert_eq!(term.pos, "mican".len() - 4);
+        let mut ed = setup();
+        ed.move_left(1).unwrap();
+        assert_eq!(ed.pos, "mican".len() - 1);
+        ed.move_left(3).unwrap();
+        assert_eq!(ed.pos, "mican".len() - 4);
     }
 
     #[test]
     fn test_move_right() {
-        let mut term = setup();
-        term.move_right(1).unwrap();
-        assert_eq!(term.pos, "mican".len());
-        term.move_to_first().unwrap();
-        term.move_right(3).unwrap();
-        assert_eq!(term.pos, 3);
+        let mut ed = setup();
+        ed.move_right(1).unwrap();
+        assert_eq!(ed.pos, "mican".len());
+        ed.move_to_first().unwrap();
+        ed.move_right(3).unwrap();
+        assert_eq!(ed.pos, 3);
     }
 
     #[test]
     fn test_move_to_first() {
-        let mut term = setup();
-        term.move_to_first().unwrap();
-        assert_eq!(term.pos, 0);
+        let mut ed = setup();
+        ed.move_to_first().unwrap();
+        assert_eq!(ed.pos, 0);
     }
 
     #[test]
     fn test_move_to_end() {
-        let mut term = setup();
-        term.move_to_end().unwrap();
-        assert_eq!(term.pos, "mican".len());
+        let mut ed = setup();
+        ed.move_to_end().unwrap();
+        assert_eq!(ed.pos, "mican".len());
     }
 }
