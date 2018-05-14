@@ -141,9 +141,9 @@ impl Editor {
         unix_cursor::move_right(n)
     }
 
-    pub fn move_down(&mut self, n: usize) -> io::Result<()> {
-        unix_cursor::move_down(n)
-    }
+    // pub fn move_down(&mut self, n: usize) -> io::Result<()> {
+    //     unix_cursor::move_down(n)
+    // }
 
     pub fn move_to_first(&mut self) -> io::Result<()> {
         self.move_to(1)

@@ -24,9 +24,9 @@ pub mod unix_cursor {
         write(&format!("\x1b[{}A", n))
     }
 
-    pub fn move_down(n: usize) -> io::Result<()> {
-        write(&format!("\x1b[{}B", n))
-    }
+    // pub fn move_down(n: usize) -> io::Result<()> {
+    //     write(&format!("\x1b[{}B", n))
+    // }
 
     pub fn move_right(n: usize) -> io::Result<()> {
         write(&format!("\x1b[{}C", n))
