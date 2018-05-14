@@ -3,7 +3,7 @@ extern crate mican;
 use mican::commands;
 use mican::parser;
 use mican::process::Process;
-use mican::reader::Reader;
+use mican::readline::reader::Reader;
 
 use std::error::Error;
 use std::fs;

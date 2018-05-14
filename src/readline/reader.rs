@@ -8,9 +8,9 @@ use nix::sys::termios::{tcgetattr, tcsetattr, SetArg, LocalFlags, InputFlags,
 use nix::sys::select::{select, FdSet};
 use nix::unistd::read;
 
-use editor::Editor;
-use history::History;
-use completer::Completer;
+use readline::editor::Editor;
+use readline::history::History;
+use readline::completer::Completer;
 
 pub struct Reader {
     ed: Editor,

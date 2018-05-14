@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use cursor::unix_cursor;
+use readline::cursor::unix_cursor;
 
 pub struct Editor {
     pub pos: usize,

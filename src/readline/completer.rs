@@ -7,7 +7,7 @@ use std::io::Write;
 use std::os::unix::io::AsRawFd;
 use std::iter::Iterator;
 
-use cursor::unix_cursor;
+use readline::cursor::unix_cursor;
 
 pub struct Completer {
     pub result: Option<Vec<String>>,
