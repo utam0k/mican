@@ -10,7 +10,7 @@ trait Cursor {
     fn move_right(dst: impl io::Write, n: usize) -> io::Result<()>;
 }
 
-pub mod unix_cursor {
+pub mod unix_terminal {
     use std::io;
     use std::io::Write;
     use std::mem::zeroed;

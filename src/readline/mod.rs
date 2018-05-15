@@ -1,5 +1,5 @@
 pub mod reader;
-mod cursor;
+mod terminal;
 mod completer;
 mod history;
 mod editor;

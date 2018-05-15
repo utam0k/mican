@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use readline::cursor::unix_cursor;
+use readline::terminal::unix_terminal;
 
 pub struct Editor {
     pub pos: usize,
@@ -45,9 +45,9 @@ impl Editor {
         if let Some(first_tab_index) = self.line[delete_range].find('\t') {
             if let Some(last_tab_index) = self.line.rfind('\t') {
                 if first_tab_index == last_tab_index {
-                    unix_cursor::move_left(5)?;
+                    unix_terminal::move_left(5)?;
                 } else {
-                    unix_cursor::move_left(7)?;
+                    unix_terminal::move_left(7)?;
                 }
             }
         }
@@ -122,7 +122,7 @@ impl Editor {
     }
 
     pub fn clear_to_screen_end(&self) -> io::Result<()> {
-        unix_cursor::clear_to_screen_end()
+        unix_terminal::clear_to_screen_end()
     }
 
     pub fn move_left(&mut self, n: usize) -> io::Result<()> {
@@ -130,7 +130,7 @@ impl Editor {
             return Ok(());
         }
         self.pos -= n;
-        unix_cursor::move_left(n)
+        unix_terminal::move_left(n)
     }
 
     pub fn move_right(&mut self, n: usize) -> io::Result<()> {
@@ -138,11 +138,11 @@ impl Editor {
             return Ok(());
         }
         self.pos += n;
-        unix_cursor::move_right(n)
+        unix_terminal::move_right(n)
     }
 
     // pub fn move_down(&mut self, n: usize) -> io::Result<()> {
-    //     unix_cursor::move_down(n)
+    //     unix_terminal::move_down(n)
     // }
 
     pub fn move_to_first(&mut self) -> io::Result<()> {
@@ -156,7 +156,7 @@ impl Editor {
 
     fn move_to(&mut self, n: usize) -> io::Result<()> {
         self.pos = n - 1;
-        unix_cursor::move_to(self.prompt.len() + n)
+        unix_terminal::move_to(self.prompt.len() + n)
     }
 
     fn is_start(&self) -> bool {

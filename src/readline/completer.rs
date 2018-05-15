@@ -7,7 +7,7 @@ use std::io::Write;
 use std::os::unix::io::AsRawFd;
 use std::iter::Iterator;
 
-use readline::cursor::unix_cursor;
+use readline::terminal::unix_terminal;
 
 pub struct Completer {
     pub result: Option<Vec<String>>,
@@ -28,9 +28,9 @@ impl Completer {
         self.n = 0;
         self.height = 0;
         if self.result.is_some() {
-            unix_cursor::move_under_line_first(1).unwrap();
-            unix_cursor::clear_to_screen_end().unwrap();
-            unix_cursor::move_up(1).unwrap();
+            unix_terminal::move_under_line_first(1).unwrap();
+            unix_terminal::clear_to_screen_end().unwrap();
+            unix_terminal::move_up(1).unwrap();
         }
         self.result = None;
     }
@@ -64,7 +64,7 @@ impl Completer {
             }
         }
         self.height = result.join(" ").len() /
-            unix_cursor::get_winsize(io::stdout().as_raw_fd())
+            unix_terminal::get_winsize(io::stdout().as_raw_fd())
                 .unwrap()
                 .ws_col as usize + 1;
 
@@ -75,7 +75,7 @@ impl Completer {
         let stdout = io::stdout();
         let mut lock = stdout.lock();
 
-        unix_cursor::move_under_line_first(1)?;
+        unix_terminal::move_under_line_first(1)?;
 
         let mut line = String::new();
         for (i, completion) in self.result.clone().unwrap().iter().enumerate() {
@@ -89,7 +89,7 @@ impl Completer {
         lock.write_all(&line.as_bytes())?;
         lock.flush()?;
 
-        unix_cursor::move_up(self.height)
+        unix_terminal::move_up(self.height)
     }
 
     pub fn next(&mut self) -> Option<&String> {
