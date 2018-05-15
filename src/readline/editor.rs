@@ -1,24 +1,116 @@
 use std::io::{self, Write};
+use std::rc::Rc;
 
-use readline::terminal::unix_terminal;
+use nix::libc::STDOUT_FILENO;
+
+use readline::terminal::{unix_terminal, terminal};
 use readline::completer::Completer;
+use readline::history::History;
 
 pub struct Editor {
     pub pos: usize,
-    pub completer_index: usize,
     pub prompt: String,
     pub line: String,
-    pub completer: Completer,
+    pub buffer: String,
+
+    pub win_size: terminal::Winsize,
+
+    pub completer: Rc<Completer>,
+    pub completions: Rc<Vec<String>>,
+    pub completer_index: usize,
+    pub completer_is_after: bool,
+
+    pub history: History,
+}
+
+pub trait EditorCompleter {
+    fn complete(&mut self);
+
+    fn completion_disply(&mut self) -> io::Result<()>;
+
+    fn completion_clear(&mut self) -> io::Result<()>;
+
+    fn completion_next(&mut self) -> io::Result<()>;
+}
+
+impl EditorCompleter for Editor {
+    fn complete(&mut self) {
+        if self.completer_is_after {
+            return;
+        }
+        self.completer_is_after = true;
+        let cmp = self.completer.clone();
+        let mut complitions = cmp.complete(&self.line);
+        complitions.sort();
+        self.completions = Rc::new(complitions);
+    }
+
+    fn completion_clear(&mut self) -> io::Result<()> {
+        if !self.completer_is_after {
+            return Ok(());
+        }
+
+        if self.completer_is_after {
+            self.buffer.push_str(&terminal::move_under_line_first(1));
+            self.buffer.push_str(&terminal::clear_to_screen_end());
+            self.buffer.push_str(&terminal::move_up(1));
+            self.display()?;
+            self.come_back()?;
+        }
+
+        self.completer_index = 0;
+        self.completer_is_after = false;
+        return Ok(());
+    }
+
+    fn completion_disply(&mut self) -> io::Result<()> {
+        self.buffer.push_str(&self.completer.show(
+            &self.completions,
+            self.completer_index,
+        ));
+        let height = self.completions.join(" ").len() / self.win_size.ws_col as usize + 1;
+        self.buffer.push_str(&terminal::move_up(height));
+        self.display()?;
+        self.move_to_end()
+    }
+
+    fn completion_next(&mut self) -> io::Result<()> {
+        self.completer_index += 1;
+        if self.completer_is_after {
+            self.completer_index += 1;
+            let index: usize;
+            if self.completer_index > self.completions.len() {
+                self.completer_index = 1;
+                index = 1;
+            } else {
+                index = self.completer_index;
+            }
+            if let Some(cmd) = self.completions.clone().get(index) {
+                self.replace(&cmd).unwrap();
+                return self.move_to_end();
+            }
+            return Ok(());
+        }
+        return Ok(());
+    }
 }
 
 impl Editor {
     pub fn new(prompt: String) -> Editor {
         Editor {
             pos: 0,
-            completer_index: 0,
             prompt: prompt,
             line: String::new(),
-            completer: Completer::new(),
+            buffer: String::new(),
+
+            win_size: terminal::get_winsize(STDOUT_FILENO).unwrap(),
+
+            completer: Rc::new(Completer::new()),
+            completions: Rc::new(Vec::new()),
+            completer_index: 0,
+            completer_is_after: false,
+
+            history: History::new(),
         }
     }
 
@@ -170,6 +262,12 @@ impl Editor {
 
     fn is_last(&self) -> bool {
         self.pos + 1 > self.line.len()
+    }
+
+    pub fn display(&mut self) -> io::Result<()> {
+        self.write(&self.buffer)?;
+        self.buffer.clear();
+        Ok(())
     }
 }
 
