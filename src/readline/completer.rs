@@ -10,33 +10,35 @@ use std::iter::Iterator;
 use readline::terminal::unix_terminal;
 
 pub struct Completer {
-    pub result: Option<Vec<String>>,
+    pub result: Vec<String>,
     n: usize,
     height: usize,
+    is_after: bool,
 }
 
 impl Completer {
     pub fn new() -> Self {
         Completer {
-            result: None,
+            result: Vec::new(),
             n: 0,
             height: 0,
+            is_after: false,
         }
     }
 
     pub fn clear(&mut self) {
         self.n = 0;
         self.height = 0;
-        if self.result.is_some() {
+        if self.is_after {
             unix_terminal::move_under_line_first(1).unwrap();
             unix_terminal::clear_to_screen_end().unwrap();
             unix_terminal::move_up(1).unwrap();
         }
-        self.result = None;
+        self.is_after = false;
     }
 
     pub fn complete(&mut self, path: &str) {
-        if self.result.is_some() {
+        if self.is_after {
             return;
         }
 
@@ -68,7 +70,8 @@ impl Completer {
                 .unwrap()
                 .ws_col as usize + 1;
 
-        self.result = Some(result.clone());
+        self.result = result.clone();
+        self.is_after = true;
     }
 
     pub fn show(&mut self) -> io::Result<()> {
@@ -78,7 +81,7 @@ impl Completer {
         unix_terminal::move_under_line_first(1)?;
 
         let mut line = String::new();
-        for (i, completion) in self.result.clone().unwrap().iter().enumerate() {
+        for (i, completion) in self.result.clone().iter().enumerate() {
             if i + 1 == self.n {
                 line.push_str(&format!("\x1B[7m{}\x1B[0m ", completion));
             } else {
@@ -93,19 +96,19 @@ impl Completer {
     }
 
     pub fn next(&mut self) -> Option<&String> {
-        if let Some(ref mut vec) = self.result {
-            let cmd = vec.get(self.n);
-            if cmd.is_none() {
-                self.n = 1;
-                return vec.get(0);
-            }
-            self.n += 1;
-            return cmd;
+        if self.result.is_empty() {
+            return None;
         }
-        return None;
+        let cmd = self.result.get(self.n);
+        if cmd.is_none() {
+            self.n = 1;
+            return self.result.get(0);
+        }
+        self.n += 1;
+        return cmd;
     }
 
     pub fn is_empty(&self) -> bool {
-        return self.result.is_none();
+        return self.result.is_empty();
     }
 }

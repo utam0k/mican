@@ -10,13 +10,11 @@ use nix::unistd::read;
 
 use readline::editor::Editor;
 use readline::history::History;
-use readline::completer::Completer;
 
 pub struct Reader {
     ed: Editor,
     history: History,
     bindings: Vec<(Cow<'static, [u8]>, Keybind)>,
-    completer: Completer,
 }
 
 impl Reader {
@@ -26,7 +24,6 @@ impl Reader {
             ed: Editor::new(prompt),
             history: History::new(),
             bindings: bindings(),
-            completer: Completer::new(),
         }
     }
 
@@ -59,14 +56,15 @@ impl Reader {
                     // self.ed.put("\t".into())?;
                     return Ok(None);
                 } else {
-                    self.completer.complete(&self.ed.line);
-                    if !self.completer.is_empty() {
-                        if let Some(cmd) = self.completer.next() {
-                            self.ed.replace(cmd)?;
-                            self.ed.move_to_end()?;
-                        }
-                    }
-                    self.completer.show()?;
+                    self.ed.completer.complete(&self.ed.line);
+                    self.ed.completer.next();
+                    // if !self.ed.completer.is_empty() {
+                    //     if let Some(cmd) = self.ed.completer.next() {
+                    //         self.ed.replace(cmd)?;
+                    //         self.ed.move_to_end()?;
+                    //     }
+                    // }
+                    self.ed.completer.show()?;
 
                     self.ed.move_to_end()?;
                 }
@@ -74,7 +72,7 @@ impl Reader {
             }
             Some(Keybind::Enter) => {
                 let result = self.ed.line.clone();
-                self.completer.clear();
+                self.ed.completer.clear();
                 self.ed.reset();
                 self.ed.new_line()?;
                 self.history.push(result.clone());
@@ -87,8 +85,8 @@ impl Reader {
                 return Ok(None);
             }
             Some(Keybind::Delete) => {
-                if !self.completer.is_empty() {
-                    self.completer.clear();
+                if !self.ed.completer.is_empty() {
+                    self.ed.completer.clear();
                     self.ed.come_back()?;
                 }
                 self.ed.delete(1)?;
@@ -103,8 +101,8 @@ impl Reader {
                 return Ok(None);
             }
             Some(Keybind::PreviousHistory) => {
-                if !self.completer.is_empty() {
-                    self.completer.clear();
+                if !self.ed.completer.is_empty() {
+                    self.ed.completer.clear();
                     self.ed.come_back()?;
                 }
                 if self.history.is_started() {
@@ -119,8 +117,8 @@ impl Reader {
                 return Ok(None);
             }
             Some(Keybind::NextHistory) => {
-                if !self.completer.is_empty() {
-                    self.completer.clear();
+                if !self.ed.completer.is_empty() {
+                    self.ed.completer.clear();
                     self.ed.come_back()?;
                 }
                 let history = match self.history.next() {
@@ -143,8 +141,8 @@ impl Reader {
                 return Ok(None);
             }
             None => {
-                if !self.completer.is_empty() {
-                    self.completer.clear();
+                if !self.ed.completer.is_empty() {
+                    self.ed.completer.clear();
                     self.ed.come_back()?;
                 }
 

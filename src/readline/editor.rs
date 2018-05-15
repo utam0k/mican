@@ -1,19 +1,24 @@
 use std::io::{self, Write};
 
 use readline::terminal::unix_terminal;
+use readline::completer::Completer;
 
 pub struct Editor {
     pub pos: usize,
+    pub completer_index: usize,
     pub prompt: String,
     pub line: String,
+    pub completer: Completer,
 }
 
 impl Editor {
     pub fn new(prompt: String) -> Editor {
         Editor {
             pos: 0,
+            completer_index: 0,
             prompt: prompt,
             line: String::new(),
+            completer: Completer::new(),
         }
     }
 
