@@ -4,7 +4,7 @@ use std::fs::read_dir;
 use std::path::is_separator;
 use std::iter::Iterator;
 
-use readline::terminal::terminal;
+use readline::terminal;
 
 pub struct Completer {}
 

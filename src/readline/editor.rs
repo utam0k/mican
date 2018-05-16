@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use nix::libc::STDOUT_FILENO;
 
-use readline::terminal::{unix_terminal, terminal};
+use readline::terminal;
 use readline::completer::Completer;
 use readline::history::History;
 
@@ -26,11 +26,11 @@ pub struct Editor {
 pub trait EditorCompleter {
     fn complete(&mut self);
 
-    fn completion_disply(&mut self) -> io::Result<()>;
+    fn completion_disply(&mut self);
 
-    fn completion_clear(&mut self) -> io::Result<()>;
+    fn completion_clear(&mut self);
 
-    fn completion_next(&mut self) -> io::Result<()>;
+    fn completion_next(&mut self);
 }
 
 impl EditorCompleter for Editor {
@@ -45,37 +45,33 @@ impl EditorCompleter for Editor {
         self.completions = Rc::new(complitions);
     }
 
-    fn completion_clear(&mut self) -> io::Result<()> {
+    fn completion_clear(&mut self) {
         if !self.completer_is_after {
-            return Ok(());
+            return;
         }
 
         if self.completer_is_after {
             self.buffer.push_str(&terminal::move_under_line_first(1));
             self.buffer.push_str(&terminal::clear_to_screen_end());
             self.buffer.push_str(&terminal::move_up(1));
-            self.display()?;
-            self.come_back()?;
+            self.come_back();
         }
 
         self.completer_index = 0;
         self.completer_is_after = false;
-        return Ok(());
     }
 
-    fn completion_disply(&mut self) -> io::Result<()> {
+    fn completion_disply(&mut self) {
         self.buffer.push_str(&self.completer.show(
             &self.completions,
             self.completer_index,
         ));
         let height = self.completions.join(" ").len() / self.win_size.ws_col as usize + 1;
         self.buffer.push_str(&terminal::move_up(height));
-        self.display()?;
-        self.move_to_end()
+        self.move_to_end();
     }
 
-    fn completion_next(&mut self) -> io::Result<()> {
-        self.completer_index += 1;
+    fn completion_next(&mut self) {
         if self.completer_is_after {
             self.completer_index += 1;
             let index: usize;
@@ -85,18 +81,16 @@ impl EditorCompleter for Editor {
             } else {
                 index = self.completer_index;
             }
-            if let Some(cmd) = self.completions.clone().get(index) {
-                self.replace(&cmd).unwrap();
-                return self.move_to_end();
+            if let Some(cmd) = self.completions.clone().get(index - 1) {
+                self.replace(&cmd);
+                self.move_to_end();
             }
-            return Ok(());
         }
-        return Ok(());
     }
 }
 
 impl Editor {
-    pub fn new(prompt: String) -> Editor {
+    pub fn new(prompt: String) -> Self {
         Editor {
             pos: 0,
             prompt: prompt,
@@ -119,141 +113,130 @@ impl Editor {
         self.line = String::new();
     }
 
-    pub fn put(&mut self, s: String) -> io::Result<()> {
+    pub fn put(&mut self, s: String) {
         if !self.is_last() {
             self.line.insert_str(self.pos, &s);
             let line = self.line.clone();
             let old_pos = self.pos;
-            self.clear_to_screen_end()?;
-            self.write(&line.get(old_pos..).unwrap())?;
-            return self.move_to(old_pos + s.len() + 1);
+            self.clear_to_screen_end();
+            self.buffer.push_str(&line.get(old_pos..).unwrap());
+            self.move_to(old_pos + s.len() + 1);
         } else {
             self.line.insert_str(self.pos, &s);
-            return self.write_str(&s);
+            self.write_str(&s);
         }
     }
 
-    pub fn delete(&mut self, n: usize) -> io::Result<()> {
+    pub fn delete(&mut self, n: usize) {
         if self.is_start() {
-            return Ok(());
+            return;
         }
 
         let delete_range = self.pos - 1..self.pos + n - 1;
         if let Some(first_tab_index) = self.line[delete_range].find('\t') {
             if let Some(last_tab_index) = self.line.rfind('\t') {
                 if first_tab_index == last_tab_index {
-                    unix_terminal::move_left(5)?;
+                    self.buffer.push_str(&terminal::move_left(5));
                 } else {
-                    unix_terminal::move_left(7)?;
+                    self.buffer.push_str(&terminal::move_left(7));
                 }
             }
         }
 
         self.line.remove(self.pos - n);
-        self.move_left(n)?;
-        self.clear_to_screen_end()?;
+        self.move_left(n);
+        self.clear_to_screen_end();
         if !self.is_last() {
             let line = self.line.clone();
             let pos = self.pos;
-            self.write(&line.get(pos..).unwrap())?;
-            return self.move_to(pos + n);
-        } else {
-            return Ok(());
+            self.buffer.push_str(&line.get(pos..).unwrap());
+            self.move_to(pos + n);
         }
     }
 
-    pub fn write_line(&mut self) -> io::Result<()> {
-        let s = &self.line;
-        self.write(s)
+    pub fn write_line(&mut self) {
+        self.buffer.push_str(&self.line);
     }
 
-    pub fn write_prompt(&mut self) -> io::Result<()> {
-        self.write(&self.prompt)
+    pub fn write_prompt(&mut self) {
+        self.buffer.push_str(&self.prompt);
     }
 
-    pub fn write_str(&mut self, s: &str) -> io::Result<()> {
+    pub fn write_str(&mut self, s: &str) {
         self.pos += s.len();
-        self.write(s)
+        self.buffer.push_str(s)
     }
 
-    pub fn come_back(&mut self) -> io::Result<()> {
+    pub fn come_back(&mut self) {
         if self.pos != 0 {
             let pos = self.pos.clone();
-            self.move_to(pos + 1)
+            self.move_to(pos + 1);
         } else {
-            self.move_to_first()
+            self.move_to_first();
         }
     }
 
-    pub fn replace(&mut self, s: &str) -> io::Result<()> {
+    pub fn replace(&mut self, s: &str) {
         self.clear_line().unwrap();
         self.line = s.to_string();
-        self.write_line()
+        self.write_line();
     }
 
-    pub fn new_line(&mut self) -> io::Result<()> {
-        self.write("\n")
-    }
-
-    fn write(&self, s: &str) -> io::Result<()> {
-        let stdout = io::stdout();
-        let mut lock = stdout.lock();
-
-        lock.write_all(s.as_bytes())?;
-        lock.flush()
+    pub fn new_line(&mut self) {
+        self.buffer.push_str("\n".into());
     }
 
     pub fn clear_line(&mut self) -> io::Result<()> {
         self.line = String::new();
         let old_pos = self.pos;
-        self.move_to_first()?;
-        self.clear_to_screen_end()?;
+        self.move_to_first();
+        self.clear_to_screen_end();
         self.pos = old_pos;
         return Ok(());
     }
 
 
-    pub fn clear_screen(&mut self) -> io::Result<()> {
+    pub fn clear_screen(&mut self) {
         self.pos = 0;
-        self.write(&format!("\x1b[2J\x1b[1;1H{}", self.prompt))
+        self.buffer.push_str(
+            &format!("\x1b[2J\x1b[1;1H{}", self.prompt),
+        );
     }
 
-    pub fn clear_to_screen_end(&self) -> io::Result<()> {
-        unix_terminal::clear_to_screen_end()
+    pub fn clear_to_screen_end(&mut self) {
+        self.buffer.push_str(&terminal::clear_to_screen_end());
     }
 
-    pub fn move_left(&mut self, n: usize) -> io::Result<()> {
+    pub fn move_left(&mut self, n: usize) {
         if self.is_start() {
-            return Ok(());
+            return;
         }
         self.pos -= n;
-        unix_terminal::move_left(n)
+        self.buffer.push_str(&terminal::move_left(n));
     }
 
-    pub fn move_right(&mut self, n: usize) -> io::Result<()> {
+    pub fn move_right(&mut self, n: usize) {
         if self.is_last() {
-            return Ok(());
+            return;
         }
         self.pos += n;
-        unix_terminal::move_right(n)
+        self.buffer.push_str(&terminal::move_right(n));
     }
 
-    // pub fn move_down(&mut self, n: usize) -> io::Result<()> {
-    //     unix_terminal::move_down(n)
-    // }
-
-    pub fn move_to_first(&mut self) -> io::Result<()> {
-        self.move_to(1)
+    pub fn move_to_first(&mut self) {
+        self.move_to(1);
     }
 
-    pub fn move_to_end(&mut self) -> io::Result<()> {
+    pub fn move_to_end(&mut self) {
         let n = self.line.len();
-        self.move_to(n + 1)
+        self.move_to(n + 1);
     }
 
-    fn move_to(&mut self, n: usize) -> io::Result<()> {
+    fn move_to(&mut self, n: usize) {
         self.pos = n - 1;
-        unix_terminal::move_to(self.prompt.len() + n)
+        self.buffer.push_str(
+            &terminal::move_to(self.prompt.len() + n),
+        );
     }
 
     fn is_start(&self) -> bool {
@@ -269,6 +252,14 @@ impl Editor {
         self.buffer.clear();
         Ok(())
     }
+
+    fn write(&self, s: &str) -> io::Result<()> {
+        let stdout = io::stdout();
+        let mut lock = stdout.lock();
+
+        lock.write_all(s.as_bytes())?;
+        lock.flush()
+    }
 }
 
 #[cfg(test)]
@@ -277,7 +268,7 @@ mod test {
 
     fn setup() -> Editor {
         let mut ed = Editor::new("> ".into());
-        ed.put("mican".into()).unwrap();
+        ed.put("mican".into());
         ed
     }
 
@@ -292,9 +283,9 @@ mod test {
     fn test_delete() {
         let mut ed = setup();
         // TODO ed.delete(2)
-        ed.delete(1).unwrap();
+        ed.delete(1);
         assert_eq!(ed.line, "mica");
-        ed.delete(1).unwrap();
+        ed.delete(1);
         assert_eq!(ed.line, "mic");
     }
 
@@ -302,16 +293,16 @@ mod test {
     fn test_is_start() {
         let mut ed = Editor::new("> ".into());
         assert!(ed.is_start());
-        ed.put("mican".into()).unwrap();
+        ed.put("mican".into());
         assert!(!ed.is_start());
-        ed.move_to_first().unwrap();
+        ed.move_to_first();
         assert!(ed.is_start());
     }
 
     #[test]
     fn test_clear_line() {
         let mut ed = setup();
-        ed.clear_line().unwrap();
+        ed.clear_line();
         assert_eq!(ed.pos, "mican".len());
         assert_eq!(ed.line, "".to_string());
     }
@@ -319,7 +310,7 @@ mod test {
     #[test]
     fn test_clear_screen() {
         let mut ed = setup();
-        ed.clear_screen().unwrap();
+        ed.clear_screen();
         assert!(ed.is_start());
         assert_eq!(ed.line, "mican".to_string());
     }
@@ -327,33 +318,33 @@ mod test {
     #[test]
     fn test_move_left() {
         let mut ed = setup();
-        ed.move_left(1).unwrap();
+        ed.move_left(1);
         assert_eq!(ed.pos, "mican".len() - 1);
-        ed.move_left(3).unwrap();
+        ed.move_left(3);
         assert_eq!(ed.pos, "mican".len() - 4);
     }
 
     #[test]
     fn test_move_right() {
         let mut ed = setup();
-        ed.move_right(1).unwrap();
+        ed.move_right(1);
         assert_eq!(ed.pos, "mican".len());
-        ed.move_to_first().unwrap();
-        ed.move_right(3).unwrap();
+        ed.move_to_first();
+        ed.move_right(3);
         assert_eq!(ed.pos, 3);
     }
 
     #[test]
     fn test_move_to_first() {
         let mut ed = setup();
-        ed.move_to_first().unwrap();
+        ed.move_to_first();
         assert_eq!(ed.pos, 0);
     }
 
     #[test]
     fn test_move_to_end() {
         let mut ed = setup();
-        ed.move_to_end().unwrap();
+        ed.move_to_end();
         assert_eq!(ed.pos, "mican".len());
     }
 }

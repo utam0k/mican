@@ -28,7 +28,8 @@ impl Reader {
     }
 
     pub fn read_line(&mut self) -> String {
-        self.ed.write_prompt().unwrap();
+        self.ed.write_prompt();
+        self.ed.display().unwrap();
         loop {
             if wait_input() {
                 let mut ch: Vec<u8> = Vec::new();
@@ -59,40 +60,40 @@ impl Reader {
                     return Ok(None);
                 } else {
                     self.ed.complete();
-                    self.ed.completion_next()?;
-                    self.ed.completion_disply()?;
+                    self.ed.completion_next();
+                    self.ed.completion_disply();
                 }
                 return Ok(None);
             }
             Some(Keybind::Enter) => {
                 let result = self.ed.line.clone();
-                self.ed.completion_clear()?;
+                self.ed.completion_clear();
                 self.ed.reset();
-                self.ed.new_line()?;
+                self.ed.new_line();
                 self.history.push(result.clone());
                 self.history.reset();
                 return Ok(Some(result));
             }
             Some(Keybind::CtrlL) => {
-                self.ed.clear_screen()?;
-                self.ed.write_line()?;
+                self.ed.clear_screen();
+                self.ed.write_line();
                 return Ok(None);
             }
             Some(Keybind::Delete) => {
-                self.ed.completion_clear()?;
-                self.ed.delete(1)?;
+                self.ed.completion_clear();
+                self.ed.delete(1);
                 return Ok(None);
             }
             Some(Keybind::ForwardChar) => {
-                self.ed.move_right(1)?;
+                self.ed.move_right(1);
                 return Ok(None);
             }
             Some(Keybind::BackwardChar) => {
-                self.ed.move_left(1)?;
+                self.ed.move_left(1);
                 return Ok(None);
             }
             Some(Keybind::PreviousHistory) => {
-                self.ed.completion_clear()?;
+                self.ed.completion_clear();
                 if self.history.is_started() {
                     self.history.set_first(self.ed.line.clone());
                 }
@@ -100,35 +101,35 @@ impl Reader {
                     Some(h) => h,
                     None => return Ok(None),
                 };
-                self.ed.replace(history)?;
-                self.ed.move_to_end()?;
+                self.ed.replace(history);
+                self.ed.move_to_end();
                 return Ok(None);
             }
             Some(Keybind::NextHistory) => {
-                self.ed.completion_clear()?;
+                self.ed.completion_clear();
                 let history = match self.history.next() {
                     Some(h) => h,
                     None => return Ok(None),
                 };
-                self.ed.replace(history)?;
-                self.ed.move_to_end()?;
+                self.ed.replace(history);
+                self.ed.move_to_end();
                 return Ok(None);
             }
             Some(Keybind::BeginningOFLine) => {
-                self.ed.move_to_first()?;
+                self.ed.move_to_first();
                 return Ok(None);
             }
             Some(Keybind::EndOfLine) => {
-                self.ed.move_to_end()?;
+                self.ed.move_to_end();
                 return Ok(None);
             }
             Some(Keybind::Something) => {
                 return Ok(None);
             }
             None => {
-                self.ed.completion_clear()?;
+                self.ed.completion_clear();
 
-                self.ed.put(String::from_utf8(ch).unwrap())?;
+                self.ed.put(String::from_utf8(ch).unwrap());
                 self.history.reset_first();
                 return Ok(None);
             }
