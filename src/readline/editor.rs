@@ -15,7 +15,7 @@ pub struct Editor {
 
     pub win_size: terminal::Winsize,
 
-    pub completer: Rc<Completer>,
+    pub completer: Completer,
     pub completions: Rc<Vec<String>>,
     pub completer_index: usize,
     pub completer_is_after: bool,
@@ -39,8 +39,7 @@ impl EditorCompleter for Editor {
             return;
         }
         self.completer_is_after = true;
-        let cmp = self.completer.clone();
-        let mut complitions = cmp.complete(&self.line);
+        let mut complitions = self.completer.complete(&self.line);
         complitions.sort();
         self.completions = Rc::new(complitions);
     }
@@ -99,7 +98,7 @@ impl Editor {
 
             win_size: terminal::get_winsize(STDOUT_FILENO).unwrap(),
 
-            completer: Rc::new(Completer::new()),
+            completer: Completer::new(),
             completions: Rc::new(Vec::new()),
             completer_index: 0,
             completer_is_after: false,
