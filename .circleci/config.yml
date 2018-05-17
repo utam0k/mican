@@ -32,7 +32,7 @@ jobs:
             export PATH=~/.cargo/bin:$PATH
             rustup install nightly-2018-05-16
             cargo +nightly-2018-05-16 install clippy --vers 0.0.200 --force
-            cargo +nightly-2018-05-16 clippy --release -- -Dclippy -Wclippy_pedantic
+            cargo +nightly-2018-05-16 clippy --release -- -Dclippy_pedantic
       - run:
           name: kcov
           command: |
