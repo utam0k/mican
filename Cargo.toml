@@ -5,3 +5,4 @@ authors = ["utam0k <k0ma@utam0k.jp>"]
 
 [dependencies]
 nix = "0.10.0"
+clippy = { version = "0.0.200", optional = true }
