@@ -7,7 +7,8 @@ use nix::unistd::getppid;
 use nix::sys::signal::{kill, Signal};
 
 pub fn run(cmd: CommandData) -> Result<(), String> {
-    let result = "Thank you for using Mican🍊";
+    // let result = "Thank you for using Mican🍊";
+    let result = "Thank you for using Mican\u{1f34a}";
     let mut out = cmd.out.unwrap();
     match out.write_all(result.as_bytes()) {
         Ok(_) => {

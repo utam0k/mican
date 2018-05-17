@@ -36,7 +36,7 @@ impl Read for Input {
 }
 
 impl Clone for Input {
-    fn clone(&self) -> Input {
+    fn clone(&self) -> Self {
         match *self {
             Input::File(ref file) => Input::File(file.try_clone().unwrap()),
             Input::Stdin(_) => Input::Stdin(io::stdin()),
@@ -86,7 +86,7 @@ impl Write for Output {
 }
 
 impl Clone for Output {
-    fn clone(&self) -> Output {
+    fn clone(&self) -> Self {
         match *self {
             Output::File(ref file) => Output::File(file.try_clone().unwrap()),
             Output::Stdout(_) => Output::Stdout(io::stdout()),
@@ -103,7 +103,7 @@ pub struct CommandData {
 }
 
 impl PartialEq for CommandData {
-    fn eq(&self, other: &CommandData) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.program == other.program && self.options == other.options
     }
 }

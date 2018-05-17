@@ -10,10 +10,10 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
     for entry in fs::read_dir(env::current_dir().unwrap()).unwrap() {
         match out.write_all(entry.unwrap().file_name().as_bytes()) {
             Ok(_) => {
-                out.write_all("\n".as_bytes()).unwrap();
+                out.write_all(b"\n").unwrap();
             }
             Err(_) => return Err("Error: pwd".to_string()),
         }
     }
-    return Ok(());
+    Ok(())
 }

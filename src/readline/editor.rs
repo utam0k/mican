@@ -23,7 +23,7 @@ pub struct Editor {
     pub history: History,
 }
 
-pub trait EditorCompleter {
+pub trait Complete {
     fn complete(&mut self);
 
     fn completion_disply(&mut self);
@@ -33,7 +33,7 @@ pub trait EditorCompleter {
     fn completion_next(&mut self);
 }
 
-impl EditorCompleter for Editor {
+impl Complete for Editor {
     fn complete(&mut self) {
         if self.completer_is_after {
             return;
@@ -73,13 +73,13 @@ impl EditorCompleter for Editor {
     fn completion_next(&mut self) {
         if self.completer_is_after {
             self.completer_index += 1;
-            let index: usize;
-            if self.completer_index > self.completions.len() {
+            let index = if self.completer_index > self.completions.len() {
                 self.completer_index = 1;
-                index = 1;
+                1
             } else {
-                index = self.completer_index;
-            }
+                self.completer_index
+            };
+
             if let Some(cmd) = self.completions.clone().get(index - 1) {
                 self.replace(&cmd);
                 self.move_to_end();
@@ -89,10 +89,10 @@ impl EditorCompleter for Editor {
 }
 
 impl Editor {
-    pub fn new(prompt: String) -> Self {
-        Editor {
+    pub fn new(prompt_: String) -> Self {
+        Self {
             pos: 0,
-            prompt: prompt,
+            prompt: prompt_,
             line: String::new(),
             buffer: String::new(),
 
@@ -112,17 +112,17 @@ impl Editor {
         self.line = String::new();
     }
 
-    pub fn put(&mut self, s: String) {
-        if !self.is_last() {
+    pub fn put(&mut self, s: &str) {
+        if self.is_last() {
+            self.line.insert_str(self.pos, &s);
+            self.write_str(&s);
+        } else {
             self.line.insert_str(self.pos, &s);
             let line = self.line.clone();
             let old_pos = self.pos;
             self.clear_to_screen_end();
             self.buffer.push_str(&line.get(old_pos..).unwrap());
             self.move_to(old_pos + s.len() + 1);
-        } else {
-            self.line.insert_str(self.pos, &s);
-            self.write_str(&s);
         }
     }
 
@@ -167,11 +167,11 @@ impl Editor {
     }
 
     pub fn come_back(&mut self) {
-        if self.pos != 0 {
-            let pos = self.pos.clone();
-            self.move_to(pos + 1);
-        } else {
+        if self.pos == 0 {
             self.move_to_first();
+        } else {
+            let pos = self.pos;
+            self.move_to(pos + 1);
         }
     }
 
@@ -182,7 +182,7 @@ impl Editor {
     }
 
     pub fn new_line(&mut self) {
-        self.buffer.push_str("\n".into());
+        self.buffer.push_str("\n");
     }
 
     pub fn clear_line(&mut self) -> io::Result<()> {
@@ -191,7 +191,7 @@ impl Editor {
         self.move_to_first();
         self.clear_to_screen_end();
         self.pos = old_pos;
-        return Ok(());
+        Ok(())
     }
 
 
@@ -267,7 +267,7 @@ mod test {
 
     fn setup() -> Editor {
         let mut ed = Editor::new("> ".into());
-        ed.put("mican".into());
+        ed.put("mican");
         ed
     }
 
@@ -292,7 +292,7 @@ mod test {
     fn test_is_start() {
         let mut ed = Editor::new("> ".into());
         assert!(ed.is_start());
-        ed.put("mican".into());
+        ed.put("mican");
         assert!(!ed.is_start());
         ed.move_to_first();
         assert!(ed.is_start());
@@ -301,7 +301,7 @@ mod test {
     #[test]
     fn test_clear_line() {
         let mut ed = setup();
-        ed.clear_line();
+        ed.clear_line().unwrap();
         assert_eq!(ed.pos, "mican".len());
         assert_eq!(ed.line, "".to_string());
     }

@@ -15,10 +15,10 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(input: String) -> Parser {
-        Parser {
+    pub fn new(input_: String) -> Self {
+        Self {
             pos: 0,
-            input: input,
+            input: input_,
             pipes: vec![],
         }
     }
@@ -51,7 +51,13 @@ impl Parser {
 
         match commands.pop().unwrap() {
             Token::Command(mut c) => {
-                if !self.pipes.is_empty() {
+                if self.pipes.is_empty() {
+                    c.set_input(next_in.clone());
+                    c.set_out(io::stdout());
+                    let mut ini = vec![c];
+                    ini.append(&mut self.set_pipe(next_in, commands));
+                    ini
+                } else {
                     let fds = self.pipes.pop().unwrap();
                     let f_in = unsafe { fs::File::from_raw_fd(fds.0) };
                     let f_out = unsafe { fs::File::from_raw_fd(fds.1) };
@@ -59,12 +65,6 @@ impl Parser {
                     c.set_out(f_out);
                     let mut ini = vec![c];
                     ini.append(&mut self.set_pipe(Input::File(f_in), commands));
-                    ini
-                } else {
-                    c.set_input(next_in.clone());
-                    c.set_out(io::stdout());
-                    let mut ini = vec![c];
-                    ini.append(&mut self.set_pipe(next_in, commands));
                     ini
                 }
             }
@@ -87,23 +87,23 @@ impl Parser {
     }
 
     fn parse_command(&mut self) -> CommandData {
-        let program = self.consume_space_or_pipe();
-        let mut options: Vec<String> = vec![];
+        let program_ = self.consume_space_or_pipe();
+        let mut options_: Vec<String> = vec![];
         loop {
             self.consume_whitespace();
             if self.pipe() {
                 break;
             }
             let s = self.consume_space_or_pipe();
-            options.push(s);
+            options_.push(s);
             if self.eof() {
                 break;
             }
         }
 
         CommandData {
-            program: program,
-            options: options,
+            program: program_,
+            options: options_,
             input: None,
             out: None,
         }

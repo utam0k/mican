@@ -11,15 +11,15 @@ pub struct Process {
 }
 
 impl Process {
-    pub fn new(f: fn(CommandData) -> Result<(), String>) -> Process {
+    pub fn new(f_: fn(CommandData) -> Result<(), String>) -> Self {
         let result = fork().unwrap();
-        let pid = match result {
+        let pid_ = match result {
             ForkResult::Parent { child } => child,
             ForkResult::Child => getpid(),
         };
-        Process {
-            pid: pid,
-            f: f,
+        Self {
+            pid: pid_,
+            f: f_,
             fork_result: result,
         }
     }

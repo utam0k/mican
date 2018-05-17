@@ -15,7 +15,7 @@ enum HistoryCmd {
 }
 
 impl Not for HistoryCmd {
-    type Output = HistoryCmd;
+    type Output = Self;
 
     fn not(self) -> Self {
         match self {
@@ -26,8 +26,8 @@ impl Not for HistoryCmd {
 }
 
 impl History {
-    pub fn new() -> History {
-        History {
+    pub fn new() -> Self {
+        Self {
             list: VecDeque::new(),
             pos: 0,
             prev: HistoryCmd::Prev,
@@ -50,8 +50,8 @@ impl History {
         }
 
         if self.pos == 0 {
-            return match self.first {
-                Some(ref mut s) => Some(s),
+            return match self.first.as_mut() {
+                Some(s) => Some(s),
                 None => None,
             };
         }
@@ -67,9 +67,8 @@ impl History {
             }
         }
         let ret = self.list.get(self.pos);
-        if ret.is_none() {
-            return None;
-        }
+        ret?;
+
         self.pos += 1;
         ret
     }

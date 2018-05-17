@@ -3,6 +3,9 @@ use token::CommandData;
 use std::io::Write;
 use std::{thread, time};
 
+
+// TODO
+#[cfg_attr(feature = "cargo-clippy", allow(non_ascii_literal))]
 pub fn run(cmd: CommandData) -> Result<(), String> {
     let mut out = cmd.out.unwrap();
     let tanakhs = vec![
@@ -23,8 +26,8 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
 
     let mut n = 0;
     loop {
-        let tanakh = format!("{}", tanakhs[n % tanakhs.len()]);
-        out.write_all("\x1b[2K\x1b[1G".as_bytes()).unwrap();
+        let tanakh = tanakhs[n % tanakhs.len()].to_string();
+        out.write_all(b"\x1b[2K\x1b[1G").unwrap();
         out.write_all(tanakh.as_bytes()).unwrap();
 
         let t = time::Duration::from_millis(200);
@@ -32,9 +35,9 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
 
         n += 1;
         if n > 100 {
-            out.write_all("\n".as_bytes()).unwrap();
+            out.write_all(b"\n").unwrap();
             break;
         }
     }
-    return Ok(());
+    Ok(())
 }

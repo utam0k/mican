@@ -39,7 +39,7 @@ pub fn clear_to_screen_end() -> String {
 pub fn get_winsize(fd: c_int) -> io::Result<Winsize> {
     let mut winsz: Winsize = unsafe { zeroed() };
 
-    let res = unsafe { ioctl(fd, TIOCGWINSZ.into(), &mut winsz) };
+    let res = unsafe { ioctl(fd, TIOCGWINSZ, &mut winsz) };
 
     if res == -1 {
         Err(io::Error::last_os_error())

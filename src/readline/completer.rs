@@ -10,7 +10,7 @@ pub struct Completer {}
 
 impl Completer {
     pub fn new() -> Self {
-        Completer {}
+        Self {}
     }
 
 
@@ -42,7 +42,7 @@ impl Completer {
         res
     }
 
-    pub fn show(&self, completions: &Vec<String>, pos: usize) -> String {
+    pub fn show(&self, completions: &[String], pos: usize) -> String {
 
         let mut line = String::new();
 
@@ -56,6 +56,6 @@ impl Completer {
             }
         }
 
-        return line;
+        line
     }
 }

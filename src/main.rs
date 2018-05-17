@@ -19,16 +19,16 @@ fn display_logo() {
     };
 
     let mut s = String::new();
-    match file.read_to_string(&mut s) {
-        Err(why) => panic!("couldn't read: {}", Error::description(&why)),
-        Ok(_) => {
-            for c in s.chars() {
-                match c {
-                    '&' => print!("\x1B[38;5;{}m&\x1B[0m", 212170),
-                    '8' => print!("\x1B[38;5;{}m8\x1B[0m", 70),
-                    '#' => print!("\x1B[38;5;{}m#\x1B[0m", 9346),
-                    s => print!("{}", s),
-                }
+
+    if let Err(e) = file.read_to_string(&mut s) {
+        panic!("couldn't read: {}", Error::description(&e));
+    } else {
+        for c in s.chars() {
+            match c {
+                '&' => print!("\x1B[38;5;212170m&\x1B[0m"),
+                '8' => print!("\x1B[38;5;70m8\x1B[0m"),
+                '#' => print!("\x1B[38;5;9346m#\x1B[0m"),
+                s => print!("{}", s),
             }
         }
     };

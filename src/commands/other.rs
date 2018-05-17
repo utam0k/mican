@@ -19,7 +19,7 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
     };
 
     match output.wait() {
-        Ok(_) => return Ok(()),
-        Err(e) => return Err(format!("{}", e)),
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("{}", e)),
     }
 }

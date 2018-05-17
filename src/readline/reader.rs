@@ -8,7 +8,7 @@ use nix::sys::termios::{tcgetattr, tcsetattr, SetArg, LocalFlags, InputFlags,
 use nix::sys::select::{select, FdSet};
 use nix::unistd::read;
 
-use readline::editor::{Editor, EditorCompleter};
+use readline::editor::{Editor, Complete};
 use readline::history::History;
 
 pub struct Reader {
@@ -20,7 +20,7 @@ pub struct Reader {
 impl Reader {
     pub fn new(prompt: String) -> Self {
         settings_term();
-        Reader {
+        Self {
             ed: Editor::new(prompt),
             history: History::new(),
             bindings: bindings(),
@@ -35,7 +35,7 @@ impl Reader {
                 let mut ch: Vec<u8> = Vec::new();
                 let _ = self.read_char(&mut ch).unwrap();
                 let res = self.find_bind(&ch);
-                if let Ok(Some(line)) = self.execute_sequence(res, ch) {
+                if let Ok(Some(line)) = self.execute_sequence(&res, ch) {
                     self.ed.display().unwrap();
                     return line;
                 }
@@ -46,12 +46,12 @@ impl Reader {
 
     fn execute_sequence(
         &mut self,
-        res: Option<Keybind>,
+        res: &Option<Keybind>,
         ch: Vec<u8>,
     ) -> io::Result<Option<String>> {
         match res {
             Some(Keybind::Complete) => {
-                if self.ed.line.trim().len() != self.ed.line.len() {
+                if !self.ed.line.trim().len() == self.ed.line.len() {
                     // TODO
                     // self.ed.put("\t".into())?;
                     return Ok(None);
@@ -60,7 +60,7 @@ impl Reader {
                     self.ed.completion_next();
                     self.ed.completion_disply();
                 }
-                return Ok(None);
+                Ok(None)
             }
             Some(Keybind::Enter) => {
                 let result = self.ed.line.clone();
@@ -69,25 +69,25 @@ impl Reader {
                 self.ed.new_line();
                 self.history.push(result.clone());
                 self.history.reset();
-                return Ok(Some(result));
+                Ok(Some(result))
             }
             Some(Keybind::CtrlL) => {
                 self.ed.clear_screen();
                 self.ed.write_line();
-                return Ok(None);
+                Ok(None)
             }
             Some(Keybind::Delete) => {
                 self.ed.completion_clear();
                 self.ed.delete(1);
-                return Ok(None);
+                Ok(None)
             }
             Some(Keybind::ForwardChar) => {
                 self.ed.move_right(1);
-                return Ok(None);
+                Ok(None)
             }
             Some(Keybind::BackwardChar) => {
                 self.ed.move_left(1);
-                return Ok(None);
+                Ok(None)
             }
             Some(Keybind::PreviousHistory) => {
                 self.ed.completion_clear();
@@ -100,7 +100,7 @@ impl Reader {
                 };
                 self.ed.replace(history);
                 self.ed.move_to_end();
-                return Ok(None);
+                Ok(None)
             }
             Some(Keybind::NextHistory) => {
                 self.ed.completion_clear();
@@ -110,25 +110,23 @@ impl Reader {
                 };
                 self.ed.replace(history);
                 self.ed.move_to_end();
-                return Ok(None);
+                Ok(None)
             }
             Some(Keybind::BeginningOFLine) => {
                 self.ed.move_to_first();
-                return Ok(None);
+                Ok(None)
             }
             Some(Keybind::EndOfLine) => {
                 self.ed.move_to_end();
-                return Ok(None);
+                Ok(None)
             }
-            Some(Keybind::Something) => {
-                return Ok(None);
-            }
+            Some(Keybind::Something) => Ok(None),
             None => {
                 self.ed.completion_clear();
 
-                self.ed.put(String::from_utf8(ch).unwrap());
+                self.ed.put(&String::from_utf8(ch).unwrap());
                 self.history.reset_first();
-                return Ok(None);
+                Ok(None)
             }
         }
     }
@@ -153,13 +151,13 @@ impl Reader {
         Ok(n)
     }
 
-    fn find_bind(&self, ch: &Vec<u8>) -> Option<Keybind> {
-        for &(ref bind, ref cmd) in &self.bindings {
-            if bind == ch {
+    fn find_bind(&self, ch: &[u8]) -> Option<Keybind> {
+        for (ref bind, ref cmd) in &self.bindings {
+            if &Cow::Borrowed(ch) == bind {
                 return Some(cmd.clone());
             }
         }
-        return None;
+        None
     }
 }
 
@@ -192,6 +190,7 @@ where
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(never_loop))]
 fn wait_input() -> bool {
     let stdin_fileno = io::stdout().as_raw_fd();
     let mut r_fds = FdSet::new();

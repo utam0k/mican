@@ -2,8 +2,10 @@ use token::CommandData;
 
 use std::env;
 
+// TODO
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 pub fn run(cmd: CommandData) -> Result<(), String> {
-    if cmd.options.len() < 1 {
+    if cmd.options.is_empty() {
         env::set_current_dir(&env::home_dir().unwrap()).unwrap();
         return Ok(());
     }
@@ -13,5 +15,5 @@ pub fn run(cmd: CommandData) -> Result<(), String> {
     if env::set_current_dir(current_path_buf.as_path()).is_err() {
         return Err(format!("{} not found", cmd.options[0]));
     };
-    return Ok(());
+    Ok(())
 }
