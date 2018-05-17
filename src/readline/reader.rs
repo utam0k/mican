@@ -55,9 +55,6 @@ impl Reader {
                     // TODO
                     // self.ed.put("\t".into())?;
                     return Ok(None);
-                } else if self.ed.line.trim().len() < 1 {
-                    // self.ed.put("\t".into())?;
-                    return Ok(None);
                 } else {
                     self.ed.complete();
                     self.ed.completion_next();
