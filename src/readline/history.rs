@@ -24,6 +24,12 @@ impl Not for HistoryCmd {
         }
     }
 }
+impl Default for History {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 
 impl History {
     pub fn new() -> Self {

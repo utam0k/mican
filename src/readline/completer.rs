@@ -6,13 +6,13 @@ use std::iter::Iterator;
 
 use readline::terminal;
 
+#[derive(Default)]
 pub struct Completer {}
 
 impl Completer {
     pub fn new() -> Self {
         Self {}
     }
-
 
     pub fn complete(&self, path: &str) -> Vec<String> {
         let (_, fname) = match path.rfind(is_separator) {
