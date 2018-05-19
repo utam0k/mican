@@ -61,13 +61,12 @@ impl Complete for Editor {
     }
 
     fn completion_disply(&mut self) {
-        self.buffer.push_str(&self.completer.show(
+        let height = self.completions.join(" ").len() / self.win_size.ws_col as usize + 1;
+        let completions = self.completer.to_string(
             &self.completions,
             self.completer_index,
-        ));
-        let height = self.completions.join(" ").len() / self.win_size.ws_col as usize + 1;
-        self.buffer.push_str(&terminal::move_up(height));
-        self.move_to_end();
+        );
+        self.write_sub(&completions, height);
     }
 
     fn completion_next(&mut self) {
@@ -252,11 +251,17 @@ impl Editor {
         Ok(())
     }
 
+    pub fn write_sub(&mut self, s: &str, height: usize) {
+        self.buffer.push_str(s);
+        self.buffer.push_str(&terminal::move_up(height));
+        self.move_to_end();
+    }
+
     fn write(&self, s: &str) -> io::Result<()> {
         let stdout = io::stdout();
         let mut lock = stdout.lock();
 
-        lock.write_all(s.as_bytes())?;
+        write!(lock, "{}", s)?;
         lock.flush()
     }
 }

@@ -42,7 +42,7 @@ impl Completer {
         res
     }
 
-    pub fn show(&self, completions: &[String], pos: usize) -> String {
+    pub fn to_string(&self, completions: &[String], pos: usize) -> String {
 
         let mut line = String::new();
 
