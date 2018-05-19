@@ -1,14 +1,15 @@
 extern crate mican;
 
-use mican::commands;
-use mican::parser;
-use mican::process::Process;
-use mican::readline::reader::Reader;
-
 use std::error::Error;
 use std::fs;
 use std::io::prelude::*;
 use std::path::Path;
+
+use mican::commands;
+use mican::parser;
+use mican::process::Process;
+use mican::readline::reader::Reader;
+use mican::readline::context::Context;
 
 fn display_logo() {
     let path = Path::new("logo.txt");
@@ -43,7 +44,7 @@ fn waitpids(children: Vec<Process>) {
 fn main() {
     display_logo();
     println!("Welcome to Mican Unix Shell.");
-    let mut reader = Reader::new("> ".into());
+    let mut reader = Reader::new(Context::new());
 
     loop {
         let input = reader.read_line();

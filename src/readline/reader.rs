@@ -8,126 +8,38 @@ use nix::sys::termios::{tcgetattr, tcsetattr, SetArg, LocalFlags, InputFlags,
 use nix::sys::select::{select, FdSet};
 use nix::unistd::read;
 
-use readline::editor::{Editor, Complete};
-use readline::history::History;
 use readline::event::Kind as EventKind;
+use readline::event::Event;
+use readline::context::Context;
 
 pub struct Reader {
-    ed: Editor,
-    history: History,
+    context: Context,
     bindings: Vec<(Cow<'static, [u8]>, EventKind)>,
 }
 
 impl Reader {
-    pub fn new(prompt: String) -> Self {
+    pub fn new(con: Context) -> Self {
         settings_term();
         Self {
-            ed: Editor::new(prompt),
-            history: History::new(),
             bindings: bindings(),
+            context: con,
         }
     }
 
     pub fn read_line(&mut self) -> String {
-        self.ed.write_prompt();
-        self.ed.display().unwrap();
+        self.context.editor.write_prompt();
+        self.context.editor.display().unwrap();
         loop {
             if wait_input() {
                 let mut ch: Vec<u8> = Vec::new();
                 let _ = self.read_char(&mut ch).unwrap();
                 let res = self.find_bind(&ch);
-                if let Ok(Some(line)) = self.execute_sequence(&res, ch) {
-                    self.ed.display().unwrap();
+                let e = Event::from_event_kind(&res);
+                if let Ok(Some(line)) = (e.handler)(&mut self.context, ch) {
+                    self.context.editor.display().unwrap();
                     return line;
                 }
-                self.ed.display().unwrap();
-            }
-        }
-    }
-
-    fn execute_sequence(
-        &mut self,
-        res: &Option<EventKind>,
-        ch: Vec<u8>,
-    ) -> io::Result<Option<String>> {
-        match res {
-            Some(EventKind::Complete) => {
-                if !self.ed.line.trim().len() == self.ed.line.len() {
-                    // TODO
-                    // self.ed.put("\t".into())?;
-                    return Ok(None);
-                } else {
-                    self.ed.complete();
-                    self.ed.completion_next();
-                    self.ed.completion_disply();
-                }
-                Ok(None)
-            }
-            Some(EventKind::Enter) => {
-                let result = self.ed.line.clone();
-                self.ed.completion_clear();
-                self.ed.reset();
-                self.ed.new_line();
-                self.history.push(result.clone());
-                self.history.reset();
-                Ok(Some(result))
-            }
-            Some(EventKind::CtrlL) => {
-                self.ed.clear_screen();
-                self.ed.write_line();
-                Ok(None)
-            }
-            Some(EventKind::Delete) => {
-                self.ed.completion_clear();
-                self.ed.delete(1);
-                Ok(None)
-            }
-            Some(EventKind::ForwardChar) => {
-                self.ed.move_right(1);
-                Ok(None)
-            }
-            Some(EventKind::BackwardChar) => {
-                self.ed.move_left(1);
-                Ok(None)
-            }
-            Some(EventKind::PreviousHistory) => {
-                self.ed.completion_clear();
-                if self.history.is_started() {
-                    self.history.set_first(self.ed.line.clone());
-                }
-                let history = match self.history.prev() {
-                    Some(h) => h,
-                    None => return Ok(None),
-                };
-                self.ed.replace(history);
-                self.ed.move_to_end();
-                Ok(None)
-            }
-            Some(EventKind::NextHistory) => {
-                self.ed.completion_clear();
-                let history = match self.history.next() {
-                    Some(h) => h,
-                    None => return Ok(None),
-                };
-                self.ed.replace(history);
-                self.ed.move_to_end();
-                Ok(None)
-            }
-            Some(EventKind::BeginningOFLine) => {
-                self.ed.move_to_first();
-                Ok(None)
-            }
-            Some(EventKind::EndOfLine) => {
-                self.ed.move_to_end();
-                Ok(None)
-            }
-            Some(EventKind::Something) => Ok(None),
-            None => {
-                self.ed.completion_clear();
-
-                self.ed.put(&String::from_utf8(ch).unwrap());
-                self.history.reset_first();
-                Ok(None)
+                self.context.editor.display().unwrap();
             }
         }
     }
