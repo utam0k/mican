@@ -125,6 +125,10 @@ impl Event {
                 |con, c: Vec<u8>| {
                     con.editor.completion_clear();
 
+                    // con.editor.complete();
+                    // con.editor.completion_next();
+                    // con.editor.completion_disply();
+
                     con.editor.put(&String::from_utf8(c).unwrap());
                     con.history.reset_first();
                     Ok(None)
