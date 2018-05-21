@@ -83,23 +83,27 @@ impl Completer {
             w_end = completions.len();
         } else {
             // Move a window edge.
-            if w_end <= pos {
-                let d = pos - page_size;
-                self.w_start = d;
-                w_end = page_size + d;
-            } else if self.w_start >= pos {
-                if pos == 0 {
-                    self.w_start = 0;
-                    w_end = page_size;
-                } else {
-                    let d = self.w_start - pos + 1;
-                    self.w_start -= d;
-                    w_end -= d;
+            match pos {
+                n if w_end <= n => {
+                    let d = pos - page_size;
+                    self.w_start = d;
+                    w_end = page_size + d;
                 }
-            }
+                n if self.w_start >= pos => {
+                    if n == 0 {
+                        self.w_start = 0;
+                        w_end = page_size;
+                    } else {
+                        let d = self.w_start - n + 1;
+                        self.w_start -= d;
+                        w_end -= d;
+                    }
+                }
+                _ => (),
+            };
 
-            let kuhaku_n = completions.len() - page_size + 1;
-            bar_end = w_end - kuhaku_n;
+            let blank_n = completions.len() - page_size + 1;
+            bar_end = w_end - blank_n;
             bar_start = self.w_start;
         }
 
@@ -121,19 +125,25 @@ impl Completer {
 
             line.push_str("\x1B[48;5;24m bin \x1B[m");
 
-
-            let kuhaku_str = "\x1B[48;5;240m \x1B[m";
-            let bar_str = "\x1B[44m \x1B[m";
-
             if bar_start <= i && i <= bar_end {
-                line.push_str(bar_str);
+                line.push_str(&color::bar(" "));
             } else {
-                line.push_str(kuhaku_str);
+                line.push_str(&color::blank(" "));
             }
 
             line.push_str("\n");
         }
 
         line
+    }
+}
+
+mod color {
+    pub fn bar(s: &str) -> String {
+        format!("\x1B[44m{}\x1B[m", s)
+    }
+
+    pub fn blank(s: &str) -> String {
+        format!("\x1B[48;5;240m{}\x1B[m", s)
     }
 }
