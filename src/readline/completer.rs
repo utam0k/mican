@@ -75,26 +75,34 @@ impl Completer {
             completions.len()
         };
 
-        // Move a window edge.
-        if w_end <= pos {
-            let d = pos - page_size;
-            self.w_start = d;
-            w_end = page_size + d;
-        } else if self.w_start >= pos {
-            if pos == 0 {
-                self.w_start = 0;
-                w_end = page_size;
-            } else {
-                let d = self.w_start - pos + 1;
-                self.w_start -= d;
-                w_end -= d;
+        let mut bar_start = 0;
+        let mut bar_end = completions.len();
+
+        if completions.len() <= page_size {
+            self.w_start = 0;
+            w_end = completions.len();
+        } else {
+            // Move a window edge.
+            if w_end <= pos {
+                let d = pos - page_size;
+                self.w_start = d;
+                w_end = page_size + d;
+            } else if self.w_start >= pos {
+                if pos == 0 {
+                    self.w_start = 0;
+                    w_end = page_size;
+                } else {
+                    let d = self.w_start - pos + 1;
+                    self.w_start -= d;
+                    w_end -= d;
+                }
             }
+
+            let kuhaku_n = completions.len() - page_size + 1;
+            bar_end = w_end - kuhaku_n;
+            bar_start = self.w_start;
         }
 
-        let kuhaku_n = completions.len() - page_size + 1;
-
-        let bar_end = w_end - kuhaku_n;
-        let bar_start = self.w_start;
 
         for (i, completion) in completions[self.w_start..w_end].iter().enumerate() {
             line.push_str(&terminal::move_to(start_pos));
