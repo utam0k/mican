@@ -65,7 +65,7 @@ impl Complete for Editor {
     fn completion_disply(&mut self) {
         // let height = self.completions.join(" ").len() / self.win_size.ws_col as usize + 1;
         let height = self.completions.len() + 1;
-        let completions = self.completer.to_string(
+        let completions = self.completer.create_string(
             &self.completions,
             self.completer_index,
             self.prompt.len() + 1,
@@ -90,6 +90,7 @@ impl Complete for Editor {
                 self.move_to_end();
             }
         }
+        self.completion_disply();
     }
 
     fn completion_prev(&mut self) {
@@ -112,6 +113,7 @@ impl Complete for Editor {
                 self.move_to_end();
             }
         }
+        self.completion_disply();
     }
 }
 

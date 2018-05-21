@@ -1,4 +1,3 @@
-
 use std::env;
 use std::collections::HashSet;
 use std::fs::read_dir;
@@ -10,11 +9,15 @@ use readline::terminal;
 #[derive(Default)]
 pub struct Completer {
     pub max_len: usize,
+    pub w_start: usize,
 }
 
 impl Completer {
     pub fn new() -> Self {
-        Self { max_len: 0 }
+        Self {
+            max_len: 0,
+            w_start: 0,
+        }
     }
 
     pub fn complete(&mut self, path: &str) -> Vec<String> {
@@ -51,8 +54,8 @@ impl Completer {
         res
     }
 
-    pub fn to_string(
-        &self,
+    pub fn create_string(
+        &mut self,
         completions: &[String],
         pos: usize,
         start_pos: usize,
@@ -60,29 +63,43 @@ impl Completer {
     ) -> String {
 
         let mut line = String::new();
-        if completions.len() >= page_size * 2 - 2 {
+        if completions.len() > page_size * 2 - 1 {
             return line;
         }
 
         line.push_str(&terminal::move_under_line_first(1));
 
-        let mut start: usize = 0;
-        let mut end: usize = completions.len();
-        let mut d = 0;
-        if page_size < completions.len() {
-            end = page_size;
+        let mut w_end = if page_size < completions.len() {
+            self.w_start + page_size
+        } else {
+            completions.len()
+        };
+
+        // Move a window edge.
+        if w_end <= pos {
+            let d = pos - page_size;
+            self.w_start = d;
+            w_end = page_size + d;
+        } else if self.w_start >= pos {
+            if pos == 0 {
+                self.w_start = 0;
+                w_end = page_size;
+            } else {
+                let d = self.w_start - pos + 1;
+                self.w_start -= d;
+                w_end -= d;
+            }
         }
 
-        if pos >= page_size {
-            d = pos - page_size;
-            start = d;
-            end = page_size + d;
-        }
+        let kuhaku_n = completions.len() - page_size + 1;
 
-        for (i, completion) in completions[start..end].iter().enumerate() {
+        let bar_end = w_end - kuhaku_n;
+        let bar_start = self.w_start;
+
+        for (i, completion) in completions[self.w_start..w_end].iter().enumerate() {
             line.push_str(&terminal::move_to(start_pos));
 
-            if i + 1 + d == pos {
+            if (pos == 0 && i == 0) || i + self.w_start + 1 == pos {
                 line.push_str(&format!("\x1B[7m{}", completion));
             } else {
                 line.push_str(&format!("\x1B[44m{}", completion));
@@ -96,15 +113,6 @@ impl Completer {
 
             line.push_str("\x1B[48;5;24m bin \x1B[m");
 
-
-            let mut bar_start = 0;
-
-            let bar_end = if page_size < completions.len() {
-                bar_start += d;
-                page_size - (completions.len() - page_size) - 1 + d
-            } else {
-                completions.len()
-            };
 
             let kuhaku_str = "\x1B[48;5;240m \x1B[m";
             let bar_str = "\x1B[44m \x1B[m";

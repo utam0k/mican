@@ -4,6 +4,7 @@ use readline::history::History;
 pub struct Context {
     pub editor: Editor,
     pub history: History,
+    pub mode: bool,
 }
 
 impl Default for Context {
@@ -17,6 +18,7 @@ impl Context {
         Self {
             editor: Editor::new("> ".into()),
             history: History::new(),
+            mode: false,
         }
     }
 }

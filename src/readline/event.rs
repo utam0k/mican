@@ -37,20 +37,21 @@ impl Event {
                         return Ok(None);
                     } else {
                         con.editor.complete();
+                        // con.editor.completion_prev();
                         con.editor.completion_next();
-                        con.editor.completion_disply();
+                        con.mode = true;
                     }
                     Ok(None)
                 }
             }
             Some(Kind::Enter) => {
-                |Context { editor, history }, _| {
-                    let result = editor.line.clone();
-                    editor.completion_clear();
-                    editor.reset();
-                    editor.new_line();
-                    history.push(result.clone());
-                    history.reset();
+                |con, _| {
+                    let result = con.editor.line.clone();
+                    con.editor.completion_clear();
+                    con.editor.reset();
+                    con.editor.new_line();
+                    con.history.push(result.clone());
+                    con.history.reset();
                     Ok(Some(result))
                 }
             }
@@ -81,7 +82,16 @@ impl Event {
                 }
             }
             Some(Kind::PreviousHistory) => {
-                |Context { editor, history }, _| {
+                |Context {
+                     editor,
+                     history,
+                     mode,
+                 },
+                 _| {
+                    if *mode {
+                        editor.completion_prev();
+                        return Ok(None);
+                    }
                     editor.completion_clear();
                     if history.is_started() {
                         history.set_first(editor.line.clone());
@@ -96,7 +106,16 @@ impl Event {
                 }
             }
             Some(Kind::NextHistory) => {
-                |Context { editor, history }, _| {
+                |Context {
+                     editor,
+                     history,
+                     mode,
+                 },
+                 _| {
+                    if *mode {
+                        editor.completion_next();
+                        return Ok(None);
+                    }
                     editor.completion_clear();
                     let history = match history.next() {
                         Some(h) => h,
