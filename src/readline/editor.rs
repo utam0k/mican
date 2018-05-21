@@ -31,6 +31,8 @@ pub trait Complete {
     fn completion_clear(&mut self);
 
     fn completion_next(&mut self);
+
+    fn completion_prev(&mut self);
 }
 
 impl Complete for Editor {
@@ -76,6 +78,28 @@ impl Complete for Editor {
     fn completion_next(&mut self) {
         if self.completer_is_after {
             self.completer_index += 1;
+            let index = if self.completer_index > self.completions.len() {
+                self.completer_index = 0;
+                0
+            } else {
+                self.completer_index
+            };
+
+            if let Some(cmd) = self.completions.clone().get(index) {
+                self.replace(&cmd);
+                self.move_to_end();
+            }
+        }
+    }
+
+    fn completion_prev(&mut self) {
+        if self.completer_is_after {
+            if self.completer_index <= 1 {
+                self.completer_index = self.completions.len();
+            } else {
+                self.completer_index -= 1;
+            }
+
             let index = if self.completer_index > self.completions.len() {
                 self.completer_index = 1;
                 1
