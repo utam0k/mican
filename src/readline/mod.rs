@@ -5,3 +5,4 @@ mod completer;
 mod history;
 mod editor;
 mod event;
+mod color;

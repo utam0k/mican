@@ -5,6 +5,7 @@ use std::path::is_separator;
 use std::iter::Iterator;
 
 use readline::terminal;
+use readline::color;
 
 #[derive(Default)]
 pub struct Completer {
@@ -126,24 +127,14 @@ impl Completer {
             line.push_str("\x1B[48;5;24m bin \x1B[m");
 
             if bar_start <= i && i <= bar_end {
-                line.push_str(&color::bar(" "));
+                line.push_str(&color::blue(" "));
             } else {
-                line.push_str(&color::blank(" "));
+                line.push_str(&color::gray(" "));
             }
 
             line.push_str("\n");
         }
 
         line
-    }
-}
-
-mod color {
-    pub fn bar(s: &str) -> String {
-        format!("\x1B[44m{}\x1B[m", s)
-    }
-
-    pub fn blank(s: &str) -> String {
-        format!("\x1B[48;5;240m{}\x1B[m", s)
     }
 }
