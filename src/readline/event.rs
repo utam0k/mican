@@ -143,6 +143,7 @@ impl Event {
             _ => {
                 |con, c: Vec<u8>| {
                     con.editor.completion_clear();
+                    con.mode = false;
 
                     // con.editor.complete();
                     // con.editor.completion_next();
