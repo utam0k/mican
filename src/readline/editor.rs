@@ -63,14 +63,20 @@ impl Complete for Editor {
     }
 
     fn completion_disply(&mut self) {
-        // let height = self.completions.join(" ").len() / self.win_size.ws_col as usize + 1;
-        let height = self.completions.len() + 1;
+        //
+        let page_size = 10;
+        let height = if self.completions.len() < page_size {
+            self.completions.len() + 1
+        } else {
+            page_size + 1
+        };
+
         let completions = self.completer.create_string(
             &self.completions,
             self.completer_index,
             self.prompt.len() + 1,
             // self.pos,
-            10,
+            page_size,
         );
         self.write_sub(&completions, height);
     }
