@@ -1,7 +1,7 @@
 use std::io;
 
 use readline::editor::Complete;
-use readline::context::Context;
+use readline::context::{Context, Mode};
 
 #[derive(Clone, Debug)]
 pub enum Kind {
@@ -37,9 +37,8 @@ impl Event {
                         return Ok(None);
                     } else {
                         con.editor.complete();
-                        // con.editor.completion_prev();
                         con.editor.completion_next();
-                        con.mode = true;
+                        con.mode = Mode::Completion;
                     }
                     Ok(None)
                 }
@@ -88,21 +87,25 @@ impl Event {
                      mode,
                  },
                  _| {
-                    if *mode {
-                        editor.completion_prev();
-                        return Ok(None);
+                    match mode {
+                        Mode::Completion => {
+                            editor.completion_prev();
+                            Ok(None)
+                        }
+                        Mode::Normal => {
+                            editor.completion_clear();
+                            if history.is_started() {
+                                history.set_first(editor.line.clone());
+                            }
+                            let history = match history.prev() {
+                                Some(h) => h,
+                                None => return Ok(None),
+                            };
+                            editor.replace(history);
+                            editor.move_to_end();
+                            Ok(None)
+                        }
                     }
-                    editor.completion_clear();
-                    if history.is_started() {
-                        history.set_first(editor.line.clone());
-                    }
-                    let history = match history.prev() {
-                        Some(h) => h,
-                        None => return Ok(None),
-                    };
-                    editor.replace(history);
-                    editor.move_to_end();
-                    Ok(None)
                 }
             }
             Some(Kind::NextHistory) => {
@@ -112,18 +115,22 @@ impl Event {
                      mode,
                  },
                  _| {
-                    if *mode {
-                        editor.completion_next();
-                        return Ok(None);
+                    match mode {
+                        Mode::Completion => {
+                            editor.completion_next();
+                            Ok(None)
+                        }
+                        Mode::Normal => {
+                            editor.completion_clear();
+                            let history = match history.next() {
+                                Some(h) => h,
+                                None => return Ok(None),
+                            };
+                            editor.replace(history);
+                            editor.move_to_end();
+                            Ok(None)
+                        }
                     }
-                    editor.completion_clear();
-                    let history = match history.next() {
-                        Some(h) => h,
-                        None => return Ok(None),
-                    };
-                    editor.replace(history);
-                    editor.move_to_end();
-                    Ok(None)
                 }
             }
             Some(Kind::BeginningOFLine) => {
@@ -143,7 +150,7 @@ impl Event {
             _ => {
                 |con, c: Vec<u8>| {
                     con.editor.completion_clear();
-                    con.mode = false;
+                    con.mode = Mode::Normal;
 
                     // con.editor.complete();
                     // con.editor.completion_next();
