@@ -93,7 +93,6 @@ impl Event {
                             Ok(None)
                         }
                         Mode::Normal => {
-                            editor.completion_clear();
                             if history.is_started() {
                                 history.set_first(editor.line.clone());
                             }
@@ -121,7 +120,6 @@ impl Event {
                             Ok(None)
                         }
                         Mode::Normal => {
-                            editor.completion_clear();
                             let history = match history.next() {
                                 Some(h) => h,
                                 None => return Ok(None),
