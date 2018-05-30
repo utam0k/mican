@@ -11,6 +11,7 @@ use nix::unistd::read;
 use readline::event::Kind as EventKind;
 use readline::event::Event;
 use readline::context::Context;
+use readline::signal;
 
 pub struct Reader {
     context: Context,
@@ -26,10 +27,23 @@ impl Reader {
         }
     }
 
-    pub fn read_line(&mut self) -> String {
+    pub fn read_line(&mut self) -> Option<String> {
         self.context.editor.write_prompt();
         self.context.editor.display().unwrap();
+
+        signal::prepare().unwrap();
+
         loop {
+            if let Some(_sig) = signal::take_signal() {
+                let e = Event::from_event_kind(&Some(EventKind::Interrupt));
+                if let Ok(Some(line)) = (e.handler)(&mut self.context, Vec::new()) {
+                    self.context.editor.display().unwrap();
+                    return Some(line);
+                }
+                self.context.editor.display().unwrap();
+                return None;
+            }
+
             if wait_input() {
                 let mut ch: Vec<u8> = Vec::new();
                 let _ = self.read_char(&mut ch).unwrap();
@@ -37,7 +51,7 @@ impl Reader {
                 let e = Event::from_event_kind(&res);
                 if let Ok(Some(line)) = (e.handler)(&mut self.context, ch) {
                     self.context.editor.display().unwrap();
-                    return line;
+                    return Some(line);
                 }
                 self.context.editor.display().unwrap();
             }

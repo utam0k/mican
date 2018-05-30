@@ -15,6 +15,7 @@ pub enum Kind {
     NextHistory,
     BeginningOFLine,
     EndOfLine,
+    Interrupt,
     // TODO
     Something,
 }
@@ -29,6 +30,15 @@ pub struct Event {
 impl Event {
     pub fn from_event_kind(k: &Option<Kind>) -> Self {
         let h: Handler = match *k {
+            Some(Kind::Interrupt) => {
+                |con, _| {
+                    con.editor.completion_clear();
+                    con.editor.reset();
+                    con.editor.new_line();
+                    con.history.reset();
+                    Ok(None)
+                }
+            }
             Some(Kind::Complete) => {
                 |con, _| {
                     if !con.editor.line.trim().len() == con.editor.line.len() {

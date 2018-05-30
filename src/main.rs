@@ -37,7 +37,9 @@ fn display_logo() {
 
 fn waitpids(children: Vec<Process>) {
     for c in children {
-        c.wait()
+        if let Err(e) = c.wait() {
+            println!("Error!: {:?}", e);
+        };
     }
 }
 
@@ -47,28 +49,28 @@ fn main() {
     let mut reader = Reader::new(Context::new());
 
     loop {
-        let input = reader.read_line();
+        if let Some(input) = reader.read_line() {
+            let commands = parser::Parser::new(input).parse();
 
-        let commands = parser::Parser::new(input).parse();
-
-        let mut children: Vec<Process> = Vec::new();
-        for c in commands {
-            let p = match c.program.as_str() {
-                "cd" => Process::new(commands::cd::run),
-                "ls" => Process::new(commands::ls::run),
-                "pwd" => Process::new(commands::pwd::run),
-                "clear" => Process::new(commands::clear::run),
-                "bye" => Process::new(commands::bye::run),
-                "tanakh" => Process::new(commands::tanakh::run),
-                "syar" => Process::new(commands::syar::run),
-                _ => Process::new(commands::other::run),
-            };
-            if p.in_child() {
-                let _ = p.run(c).map_err(|err| eprintln!("{}", err));
-            } else {
-                children.push(p)
+            let mut children: Vec<Process> = Vec::new();
+            for c in commands {
+                let p = match c.program.as_str() {
+                    "cd" => Process::new(commands::cd::run),
+                    "ls" => Process::new(commands::ls::run),
+                    "pwd" => Process::new(commands::pwd::run),
+                    "clear" => Process::new(commands::clear::run),
+                    "bye" => Process::new(commands::bye::run),
+                    "tanakh" => Process::new(commands::tanakh::run),
+                    "syar" => Process::new(commands::syar::run),
+                    _ => Process::new(commands::other::run),
+                };
+                if p.in_child() {
+                    let _ = p.run(c).map_err(|err| eprintln!("{}", err));
+                } else {
+                    children.push(p)
+                }
             }
+            waitpids(children);
         }
-        waitpids(children);
     }
 }

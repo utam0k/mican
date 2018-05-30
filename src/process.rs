@@ -1,5 +1,7 @@
 use nix::sys::wait::waitpid;
 use nix::unistd::{fork, getpid, ForkResult, Pid};
+use nix::sys::wait::WaitStatus;
+use nix::Result as NixResult;
 
 use std::process::exit;
 use token::CommandData;
@@ -34,8 +36,8 @@ impl Process {
         result
     }
 
-    pub fn wait(&self) {
-        waitpid(self.pid, None).unwrap();
+    pub fn wait(&self) -> NixResult<WaitStatus> {
+        waitpid(self.pid, None)
     }
 
     fn exit(&self) {
