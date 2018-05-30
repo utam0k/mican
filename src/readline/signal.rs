@@ -1,5 +1,5 @@
 use std::io;
-use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use nix::sys::signal;
 use nix::libc::c_int;
@@ -13,8 +13,9 @@ pub enum Signal {
     Quit,
 }
 
-static LAST_SIGNAL: AtomicUsize = ATOMIC_USIZE_INIT;
+static LAST_SIGNAL: AtomicUsize = AtomicUsize::new(0);
 
+#[cfg_attr(feature = "cargo-clippy", allow(cast_sign_loss))]
 extern "C" fn handle_sigint(sig: i32) {
     set_raw_signal(sig as usize);
 }
@@ -31,6 +32,7 @@ fn take_last_signal() -> Option<Signal> {
     conv_signal(LAST_SIGNAL.swap(!0, Ordering::Relaxed))
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(cast_possible_wrap, cast_possible_truncation))]
 fn conv_signal(n: usize) -> Option<Signal> {
     if n == !0 {
         None
