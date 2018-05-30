@@ -34,7 +34,7 @@ impl Reader {
         signal::prepare().unwrap();
 
         loop {
-            if let Some(_sig) = signal::take_signal() {
+            if let Some(_sig) = signal::take() {
                 let e = Event::from_event_kind(&Some(EventKind::Interrupt));
                 if let Ok(Some(line)) = (e.handler)(&mut self.context, Vec::new()) {
                     self.context.editor.display().unwrap();

@@ -23,7 +23,7 @@ fn set_raw_signal(sig: usize) {
     LAST_SIGNAL.store(sig, Ordering::Relaxed);
 }
 
-pub fn take_signal() -> Option<Signal> {
+pub fn take() -> Option<Signal> {
     take_last_signal()
 }
 
