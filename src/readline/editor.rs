@@ -64,7 +64,6 @@ impl Complete for Editor {
     }
 
     fn completion_disply(&mut self) {
-        //
         let page_size = 10;
         let height = if self.completions.len() < page_size {
             self.completions.len() + 1
@@ -75,7 +74,7 @@ impl Complete for Editor {
         let completions = self.completer.create_string(
             &self.completions,
             self.completer_index,
-            self.prompt.len() + 1,
+            self.prompt.len(),
             // self.pos,
             page_size,
         );
@@ -164,7 +163,7 @@ impl Editor {
             self.w_buffer.push_str(
                 &line.as_str().get(old_pos..).unwrap(),
             );
-            self.move_to(old_pos + s.len() + 1);
+            self.move_to(old_pos + s.len());
         }
     }
 
@@ -173,7 +172,7 @@ impl Editor {
             return;
         }
 
-        let delete_range = self.pos - 1..self.pos + n - 1;
+        let delete_range = self.pos - n..self.pos;
         if let Some(first_tab_index) = self.buffer.as_str()[delete_range].find('\t') {
             if let Some(last_tab_index) = self.buffer.as_str().rfind('\t') {
                 if first_tab_index == last_tab_index {
@@ -213,7 +212,7 @@ impl Editor {
             self.move_to_first();
         } else {
             let pos = self.pos;
-            self.move_to(pos + 1);
+            self.move_to(pos);
         }
     }
 
@@ -265,18 +264,18 @@ impl Editor {
     }
 
     pub fn move_to_first(&mut self) {
-        self.move_to(1);
+        self.move_to(0);
     }
 
     pub fn move_to_end(&mut self) {
         let n = self.buffer.len();
-        self.move_to(n + 1);
+        self.move_to(n);
     }
 
     fn move_to(&mut self, n: usize) {
-        self.pos = n - 1;
+        self.pos = n;
         self.w_buffer.push_str(
-            &terminal::move_to(self.prompt.len() + n),
+            &terminal::move_to(self.prompt.len() + n + 1),
         );
     }
 
