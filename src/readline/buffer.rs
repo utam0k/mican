@@ -3,13 +3,21 @@ pub struct Buffer {
     data: String,
 }
 
+impl From<String> for Buffer {
+    fn from(s: String) -> Self {
+        Self { data: s }
+    }
+}
+
+impl<'a> From<&'a str> for Buffer {
+    fn from(s: &'a str) -> Self {
+        Self { data: s.to_owned() }
+    }
+}
+
 impl Buffer {
     pub fn new() -> Self {
         Self { data: String::new() }
-    }
-
-    pub fn new_from_str(s: String) -> Self {
-        Self { data: s }
     }
 
     pub fn len(&self) -> usize {

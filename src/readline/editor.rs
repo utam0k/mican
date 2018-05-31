@@ -221,7 +221,7 @@ impl Editor {
 
     pub fn replace(&mut self, s: &str) {
         self.clear_line().unwrap();
-        self.buffer = Buffer::new_from_str(s.into());
+        self.buffer = Buffer::from(s);
         self.write_line();
     }
 
