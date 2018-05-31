@@ -323,7 +323,7 @@ mod test {
     #[test]
     fn test_put() {
         let ed = setup();
-        assert_eq!(ed.line, "mican".to_string());
+        assert_eq!(ed.line(), "mican");
         assert_eq!(ed.pos, "mican".len());
     }
 
@@ -332,9 +332,9 @@ mod test {
         let mut ed = setup();
         // TODO ed.delete(2)
         ed.delete(1);
-        assert_eq!(ed.line, "mica");
+        assert_eq!(ed.line(), "mica");
         ed.delete(1);
-        assert_eq!(ed.line, "mic");
+        assert_eq!(ed.line(), "mic");
     }
 
     #[test]
@@ -352,7 +352,7 @@ mod test {
         let mut ed = setup();
         ed.clear_line().unwrap();
         assert_eq!(ed.pos, "mican".len());
-        assert_eq!(ed.line, "".to_string());
+        assert_eq!(ed.line(), "");
     }
 
     #[test]
@@ -360,7 +360,7 @@ mod test {
         let mut ed = setup();
         ed.clear_screen();
         assert!(ed.is_start());
-        assert_eq!(ed.line, "mican".to_string());
+        assert_eq!(ed.line(), "mican");
     }
 
     #[test]
