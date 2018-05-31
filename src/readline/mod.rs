@@ -7,3 +7,4 @@ mod editor;
 mod event;
 mod color;
 mod signal;
+mod buffer;

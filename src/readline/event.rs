@@ -41,7 +41,7 @@ impl Event {
             }
             Some(Kind::Complete) => {
                 |con, _| {
-                    if !con.editor.line.trim().len() == con.editor.line.len() {
+                    if !con.editor.line().trim().len() == con.editor.line().len() {
                         // TODO
                         // editor.put("\t".into())?;
                         return Ok(None);
@@ -55,7 +55,7 @@ impl Event {
             }
             Some(Kind::Enter) => {
                 |con, _| {
-                    let result = con.editor.line.clone();
+                    let result = con.editor.line().clone();
                     con.editor.completion_clear();
                     con.editor.reset();
                     con.editor.new_line();
@@ -104,7 +104,7 @@ impl Event {
                         }
                         Mode::Normal => {
                             if history.is_started() {
-                                history.set_first(editor.line.clone());
+                                history.set_first(editor.line().clone());
                             }
                             let history = match history.prev() {
                                 Some(h) => h,
