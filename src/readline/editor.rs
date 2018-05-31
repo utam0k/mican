@@ -42,7 +42,7 @@ impl Complete for Editor {
             return;
         }
         self.completer_is_after = true;
-        let mut complitions = self.completer.complete(&self.buffer.as_string());
+        let mut complitions = self.completer.complete(&self.buffer.as_str());
         complitions.sort();
         self.completions = Rc::new(complitions);
     }
@@ -148,8 +148,8 @@ impl Editor {
         self.buffer = Buffer::new();
     }
 
-    pub fn line(&self) -> &String {
-        self.buffer.as_string()
+    pub fn line(&self) -> String {
+        self.buffer.as_str()
     }
 
     pub fn put(&mut self, s: &str) {
@@ -162,7 +162,7 @@ impl Editor {
             let old_pos = self.pos;
             self.clear_to_screen_end();
             self.w_buffer.push_str(
-                &line.as_string().get(old_pos..).unwrap(),
+                &line.as_str().get(old_pos..).unwrap(),
             );
             self.move_to(old_pos + s.len() + 1);
         }
@@ -174,8 +174,8 @@ impl Editor {
         }
 
         let delete_range = self.pos - 1..self.pos + n - 1;
-        if let Some(first_tab_index) = self.buffer.as_string()[delete_range].find('\t') {
-            if let Some(last_tab_index) = self.buffer.as_string().rfind('\t') {
+        if let Some(first_tab_index) = self.buffer.as_str()[delete_range].find('\t') {
+            if let Some(last_tab_index) = self.buffer.as_str().rfind('\t') {
                 if first_tab_index == last_tab_index {
                     self.w_buffer.push_str(&terminal::move_left(5));
                 } else {
@@ -190,15 +190,13 @@ impl Editor {
         if !self.is_last() {
             let line = self.buffer.clone();
             let pos = self.pos;
-            self.w_buffer.push_str(
-                &line.as_string().get(pos..).unwrap(),
-            );
+            self.w_buffer.push_str(&line.as_str().get(pos..).unwrap());
             self.move_to(pos + n);
         }
     }
 
     pub fn write_line(&mut self) {
-        self.w_buffer.push_str(self.buffer.as_string());
+        self.w_buffer.push_str(&self.buffer.as_str());
     }
 
     pub fn write_prompt(&mut self) {
