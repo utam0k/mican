@@ -136,14 +136,7 @@ impl Complete for Editor {
                 self.completer_index -= 1;
             }
 
-            let index = if self.completer_index > self.completions.len() {
-                self.completer_index = 1;
-                1
-            } else {
-                self.completer_index
-            };
-
-            if let Some(cmd) = self.completions.clone().get(index) {
+            if let Some(cmd) = self.completions.clone().get(self.completer_index) {
                 let words = self.buffer.get_words();
                 match CursorPosition::get(self.pos, &words) {
                     CursorPosition::InSpace(_, _) |
