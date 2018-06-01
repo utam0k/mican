@@ -6,7 +6,7 @@ use nix::libc::STDOUT_FILENO;
 use readline::terminal;
 use readline::completer::Completer;
 use readline::history::History;
-use readline::buffer::Buffer;
+use readline::buffer::{Buffer, CursorPosition};
 
 pub struct Editor {
     pub pos: usize,
@@ -42,9 +42,21 @@ impl Complete for Editor {
             return;
         }
         self.completer_is_after = true;
-        let mut complitions = self.completer.complete(&self.buffer.as_str());
-        complitions.sort();
-        self.completions = Rc::new(complitions);
+        let words = self.buffer.get_words();
+        let word = match CursorPosition::get(self.pos, &words) {
+            CursorPosition::InSpace(_, _) |
+            CursorPosition::InWord(_) => None,
+            CursorPosition::OnWordLeftEdge(i) |
+            CursorPosition::OnWordRightEdge(i) => Some(words[i]),
+        };
+
+        if let Some(range) = word {
+            let mut complitions = self.completer.complete(
+                &self.buffer.as_str()[range.0..range.1],
+            );
+            complitions.sort();
+            self.completions = Rc::new(complitions);
+        }
     }
 
     fn completion_clear(&mut self) {
@@ -92,8 +104,19 @@ impl Complete for Editor {
             };
 
             if let Some(cmd) = self.completions.clone().get(index) {
-                self.replace(&cmd);
-                self.move_to_end();
+
+                let words = self.buffer.get_words();
+                let word = match CursorPosition::get(self.pos, &words) {
+                    CursorPosition::InSpace(_, _) |
+                    CursorPosition::InWord(_) => None,
+                    CursorPosition::OnWordLeftEdge(i) |
+                    CursorPosition::OnWordRightEdge(i) => Some(words[i]),
+                };
+
+                if let Some(range) = word {
+                    self.delete(range.1 - range.0);
+                    self.put(cmd);
+                }
             }
         }
         self.completion_disply();
@@ -183,14 +206,15 @@ impl Editor {
             }
         }
 
-        self.buffer.remove(self.pos - n);
+        self.buffer.remove(self.pos - n, self.pos);
+
         self.move_left(n);
         self.clear_to_screen_end();
         if !self.is_last() {
             let line = self.buffer.clone();
             let pos = self.pos;
             self.w_buffer.push_str(&line.as_str().get(pos..).unwrap());
-            self.move_to(pos + n);
+            self.move_to(pos);
         }
     }
 
@@ -296,7 +320,8 @@ impl Editor {
     pub fn write_sub(&mut self, s: &str, height: usize) {
         self.w_buffer.push_str(s);
         self.w_buffer.push_str(&terminal::move_up(height));
-        self.move_to_end();
+        let pos = self.pos;
+        self.move_to(pos);
     }
 
     fn write(&self, s: &str) -> io::Result<()> {
@@ -319,19 +344,29 @@ mod test {
 
     #[test]
     fn test_put() {
-        let ed = setup();
+        let mut ed = setup();
         assert_eq!(ed.line(), "mican");
         assert_eq!(ed.pos, "mican".len());
+        ed.move_left(1);
+        ed.put("aa");
+        assert_eq!(ed.line(), "micaaan");
     }
 
     #[test]
     fn test_delete() {
         let mut ed = setup();
-        // TODO ed.delete(2)
         ed.delete(1);
         assert_eq!(ed.line(), "mica");
         ed.delete(1);
         assert_eq!(ed.line(), "mic");
+        ed.delete(2);
+        assert_eq!(ed.line(), "m");
+
+        let mut ed = setup();
+        ed.move_left(1);
+        ed.delete(3);
+        assert_eq!(ed.line(), "mn");
+        assert_eq!(ed.pos, 1);
     }
 
     #[test]
