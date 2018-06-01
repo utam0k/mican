@@ -110,10 +110,10 @@ impl Complete for Editor {
 
         self.completer_index += 1;
         let index = if self.completer_index > self.completions.len() {
-            self.completer_index = 0;
+            self.completer_index = 1;
             0
         } else {
-            self.completer_index
+            self.completer_index - 1
         };
         self.swap_completion(index);
         self.completion_disply();
