@@ -34,6 +34,8 @@ pub trait Complete {
     fn completion_next(&mut self);
 
     fn completion_prev(&mut self);
+
+    fn swap_completion(&mut self, index: usize);
 }
 
 impl Complete for Editor {
@@ -102,55 +104,52 @@ impl Complete for Editor {
     }
 
     fn completion_next(&mut self) {
-        if self.completer_is_after {
-            self.completer_index += 1;
-            let index = if self.completer_index > self.completions.len() {
-                self.completer_index = 0;
-                0
-            } else {
-                self.completer_index
-            };
-
-            if let Some(cmd) = self.completions.clone().get(index) {
-                let words = self.buffer.get_words();
-                match CursorPosition::get(self.pos, &words) {
-                    CursorPosition::InSpace(_, _) |
-                    CursorPosition::InWord(_) => (),
-                    CursorPosition::OnWordLeftEdge(i) |
-                    CursorPosition::OnWordRightEdge(i) => {
-                        let range = words[i];
-                        self.delete(range.1 - range.0);
-                        self.put(cmd);
-                    }
-                };
-            }
+        if !self.completer_is_after {
+            return;
         }
+
+        self.completer_index += 1;
+        let index = if self.completer_index > self.completions.len() {
+            self.completer_index = 0;
+            0
+        } else {
+            self.completer_index
+        };
+        self.swap_completion(index);
         self.completion_disply();
     }
 
     fn completion_prev(&mut self) {
-        if self.completer_is_after {
-            if self.completer_index <= 1 {
-                self.completer_index = self.completions.len();
-            } else {
-                self.completer_index -= 1;
-            }
-
-            if let Some(cmd) = self.completions.clone().get(self.completer_index) {
-                let words = self.buffer.get_words();
-                match CursorPosition::get(self.pos, &words) {
-                    CursorPosition::InSpace(_, _) |
-                    CursorPosition::InWord(_) => (),
-                    CursorPosition::OnWordLeftEdge(i) |
-                    CursorPosition::OnWordRightEdge(i) => {
-                        let range = words[i];
-                        self.delete(range.1 - range.0);
-                        self.put(cmd);
-                    }
-                };
-            }
+        if !self.completer_is_after {
+            return;
         }
+
+        let index = if self.completer_index <= 1 {
+            self.completer_index = self.completions.len();
+            self.completer_index
+        } else {
+            self.completer_index -= 1;
+            self.completer_index
+        };
+
+        self.swap_completion(index);
         self.completion_disply();
+    }
+
+    fn swap_completion(&mut self, index: usize) {
+        if let Some(cmd) = self.completions.clone().get(index) {
+            let words = self.buffer.get_words();
+            match CursorPosition::get(self.pos, &words) {
+                CursorPosition::InSpace(_, _) |
+                CursorPosition::InWord(_) => (),
+                CursorPosition::OnWordLeftEdge(i) |
+                CursorPosition::OnWordRightEdge(i) => {
+                    let range = words[i];
+                    self.delete(range.1 - range.0);
+                    self.put(cmd);
+                }
+            };
+        }
     }
 }
 
