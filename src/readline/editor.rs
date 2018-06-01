@@ -42,21 +42,21 @@ impl Complete for Editor {
             return;
         }
         self.completer_is_after = true;
-        let words = self.buffer.get_words();
-        let word = match CursorPosition::get(self.pos, &words) {
-            CursorPosition::InSpace(_, _) |
-            CursorPosition::InWord(_) => None,
-            CursorPosition::OnWordLeftEdge(i) |
-            CursorPosition::OnWordRightEdge(i) => Some(words[i]),
-        };
 
-        if let Some(range) = word {
-            let mut complitions = self.completer.complete(
-                &self.buffer.as_str()[range.0..range.1],
-            );
-            complitions.sort();
-            self.completions = Rc::new(complitions);
-        }
+        let words_pos = self.buffer.get_words();
+        match CursorPosition::get(self.pos, &words_pos) {
+            CursorPosition::InSpace(_, _) |
+            CursorPosition::InWord(_) => (),
+            CursorPosition::OnWordLeftEdge(i) |
+            CursorPosition::OnWordRightEdge(i) => {
+                let range = words_pos[i];
+                let mut complitions = self.completer.complete(
+                    &self.buffer.as_str()[range.0..range.1],
+                );
+                complitions.sort();
+                self.completions = Rc::new(complitions);
+            }
+        };
     }
 
     fn completion_clear(&mut self) {
@@ -83,11 +83,19 @@ impl Complete for Editor {
             page_size + 1
         };
 
+        let words = self.buffer.get_words();
+        let completion_start_pos = self.prompt.len() + 1 +
+            match CursorPosition::get(self.pos, &words) {
+                CursorPosition::InSpace(_, _) |
+                CursorPosition::InWord(_) => 0,
+                CursorPosition::OnWordLeftEdge(i) |
+                CursorPosition::OnWordRightEdge(i) => words[i].0,
+            };
+
         let completions = self.completer.create_string(
             &self.completions,
             self.completer_index,
-            self.prompt.len(),
-            // self.pos,
+            completion_start_pos,
             page_size,
         );
         self.write_sub(&completions, height);
@@ -104,19 +112,17 @@ impl Complete for Editor {
             };
 
             if let Some(cmd) = self.completions.clone().get(index) {
-
                 let words = self.buffer.get_words();
-                let word = match CursorPosition::get(self.pos, &words) {
+                match CursorPosition::get(self.pos, &words) {
                     CursorPosition::InSpace(_, _) |
-                    CursorPosition::InWord(_) => None,
+                    CursorPosition::InWord(_) => (),
                     CursorPosition::OnWordLeftEdge(i) |
-                    CursorPosition::OnWordRightEdge(i) => Some(words[i]),
+                    CursorPosition::OnWordRightEdge(i) => {
+                        let range = words[i];
+                        self.delete(range.1 - range.0);
+                        self.put(cmd);
+                    }
                 };
-
-                if let Some(range) = word {
-                    self.delete(range.1 - range.0);
-                    self.put(cmd);
-                }
             }
         }
         self.completion_disply();
@@ -137,9 +143,18 @@ impl Complete for Editor {
                 self.completer_index
             };
 
-            if let Some(cmd) = self.completions.clone().get(index - 1) {
-                self.replace(&cmd);
-                self.move_to_end();
+            if let Some(cmd) = self.completions.clone().get(index) {
+                let words = self.buffer.get_words();
+                match CursorPosition::get(self.pos, &words) {
+                    CursorPosition::InSpace(_, _) |
+                    CursorPosition::InWord(_) => (),
+                    CursorPosition::OnWordLeftEdge(i) |
+                    CursorPosition::OnWordRightEdge(i) => {
+                        let range = words[i];
+                        self.delete(range.1 - range.0);
+                        self.put(cmd);
+                    }
+                };
             }
         }
         self.completion_disply();
