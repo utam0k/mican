@@ -31,11 +31,11 @@ impl Event {
     pub fn from_event_kind(k: &Option<Kind>) -> Self {
         let h: Handler = match *k {
             Some(Kind::Interrupt) => {
-                |con, _| {
-                    con.editor.completion_clear();
-                    con.editor.reset();
-                    con.editor.new_line();
-                    con.history.reset();
+                |Context { editor, history, .. }, _| {
+                    editor.completion_clear();
+                    editor.reset();
+                    editor.new_line();
+                    history.reset();
                     Ok(None)
                 }
             }
@@ -54,39 +54,39 @@ impl Event {
                 }
             }
             Some(Kind::Enter) => {
-                |con, _| {
-                    let result = con.editor.line().clone();
-                    con.editor.completion_clear();
-                    con.editor.reset();
-                    con.editor.new_line();
-                    con.history.push(result.clone());
-                    con.history.reset();
+                |Context { editor, history, .. }, _| {
+                    let result = editor.line().clone();
+                    editor.completion_clear();
+                    editor.reset();
+                    editor.new_line();
+                    history.push(result.clone());
+                    history.reset();
                     Ok(Some(result))
                 }
             }
             Some(Kind::CtrlL) => {
-                |con, _| {
-                    con.editor.clear_screen();
-                    con.editor.write_line();
+                |Context { editor, .. }, _| {
+                    editor.clear_screen();
+                    editor.write_line();
                     Ok(None)
                 }
             }
             Some(Kind::Delete) => {
-                |con, _| {
-                    con.editor.completion_clear();
-                    con.editor.delete(1);
+                |Context { editor, .. }, _| {
+                    editor.completion_clear();
+                    editor.delete(1);
                     Ok(None)
                 }
             }
             Some(Kind::ForwardChar) => {
-                |con, _| {
-                    con.editor.move_right(1);
+                |Context { editor, .. }, _| {
+                    editor.move_right(1);
                     Ok(None)
                 }
             }
             Some(Kind::BackwardChar) => {
-                |con, _| {
-                    con.editor.move_left(1);
+                |Context { editor, .. }, _| {
+                    editor.move_left(1);
                     Ok(None)
                 }
             }
@@ -142,15 +142,15 @@ impl Event {
                 }
             }
             Some(Kind::BeginningOFLine) => {
-                |con, _| {
-                    con.editor.move_to_first();
+                |Context { editor, .. }, _| {
+                    editor.move_to_first();
                     Ok(None)
                 }
             }
 
             Some(Kind::EndOfLine) => {
-                |con, _| {
-                    con.editor.move_to_end();
+                |Context { editor, .. }, _| {
+                    editor.move_to_end();
                     Ok(None)
                 }
             }
