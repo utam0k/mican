@@ -94,8 +94,7 @@ impl Reader {
 
 fn settings_term() {
     let stdin_fileno = io::stdout().as_raw_fd();
-    let old_tio = tcgetattr(stdin_fileno).unwrap();
-    let mut tio = old_tio;
+    let mut tio = tcgetattr(stdin_fileno).unwrap();
 
     tio.input_flags.remove(
         InputFlags::INLCR | InputFlags::ICRNL,
