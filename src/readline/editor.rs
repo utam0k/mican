@@ -1,3 +1,5 @@
+//! Editing a line and display history and completion.
+
 use std::io::{self, Write};
 use std::rc::Rc;
 
@@ -9,11 +11,16 @@ use readline::history::History;
 use readline::buffer::{Buffer, CursorPosition};
 
 pub struct Editor {
+    /// Current cursor posion.
     pub pos: usize,
+
     pub prompt: String,
     pub buffer: Buffer,
+
+    /// Writting `stdin` when function `write` is called.
     pub w_buffer: String,
 
+    /// Terminal's size infomation.
     pub win_size: terminal::Winsize,
 
     pub completer: Completer,

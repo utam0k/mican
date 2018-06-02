@@ -15,6 +15,7 @@ use readline::signal;
 
 pub struct Reader {
     context: Context,
+    /// Key bindings.
     bindings: Vec<(Cow<'static, [u8]>, EventKind)>,
 }
 
@@ -27,6 +28,8 @@ impl Reader {
         }
     }
 
+    /// Interactively reads a line from `stdin`.
+    /// When an interrupt intervened, return None.
     pub fn read_line(&mut self) -> Option<String> {
         self.context.editor.write_prompt();
         self.context.editor.display().unwrap();
@@ -34,6 +37,7 @@ impl Reader {
         signal::prepare().unwrap();
 
         loop {
+            // Received a something signal.
             if let Some(_sig) = signal::take() {
                 let e = Event::from_event_kind(&Some(EventKind::Interrupt));
                 if let Ok(Some(line)) = (e.handler)(&mut self.context, Vec::new()) {

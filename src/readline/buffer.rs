@@ -37,6 +37,7 @@ impl CursorPosition {
     }
 }
 
+/// A buffer for text in the line editor.
 #[derive(Clone, Default)]
 pub struct Buffer {
     data: Vec<char>,
