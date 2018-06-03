@@ -123,13 +123,12 @@ impl Completer {
             }
 
             line.push_str("\x1B[m");
-
             line.push_str("\x1B[48;5;24m bin \x1B[m");
 
             if bar_start <= i && i <= bar_end {
-                line.push_str(&color::blue(" "));
-            } else {
                 line.push_str(&color::gray(" "));
+            } else {
+                line.push_str(&color::blue(" "));
             }
 
             line.push_str("\n");
