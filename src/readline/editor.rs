@@ -52,13 +52,13 @@ impl Complete for Editor {
         }
         self.completer_is_after = true;
 
-        let words_pos = self.buffer.get_words();
-        match CursorPosition::get(self.pos, &words_pos) {
+        let (words, pos) = self.buffer.get_words_and_pos(self.pos);
+        match pos {
             CursorPosition::InSpace(_, _) |
             CursorPosition::InWord(_) => (),
             CursorPosition::OnWordLeftEdge(i) |
             CursorPosition::OnWordRightEdge(i) => {
-                let range = words_pos[i];
+                let range = words[i];
                 let mut complitions = self.completer.complete(
                     &self.buffer.as_str()[range.0..range.1],
                 );
@@ -145,8 +145,8 @@ impl Complete for Editor {
 
     fn swap_completion(&mut self, index: usize) {
         if let Some(cmd) = self.completions.clone().get(index) {
-            let words = self.buffer.get_words();
-            match CursorPosition::get(self.pos, &words) {
+            let (words, pos) = self.buffer.get_words_and_pos(self.pos);
+            match pos {
                 CursorPosition::InSpace(_, _) |
                 CursorPosition::InWord(_) => (),
                 CursorPosition::OnWordLeftEdge(i) |

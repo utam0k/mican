@@ -121,4 +121,10 @@ impl Buffer {
 
         res
     }
+
+    pub fn get_words_and_pos(&self, cursor: usize) -> (Vec<(usize, usize)>, CursorPosition) {
+        let words = self.get_words();
+        let pos = CursorPosition::get(cursor, &words);
+        (words, pos)
+    }
 }
