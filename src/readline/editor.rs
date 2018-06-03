@@ -53,18 +53,13 @@ impl Complete for Editor {
         self.completer_is_after = true;
 
         let (words, pos) = self.buffer.get_words_and_pos(self.pos);
-        match pos {
-            CursorPosition::InSpace(_, _) |
-            CursorPosition::InWord(_) => (),
-            CursorPosition::OnWordLeftEdge(i) |
-            CursorPosition::OnWordRightEdge(i) => {
-                let range = words[i];
-                let mut complitions = self.completer.complete(
-                    &self.buffer.as_str()[range.0..range.1],
-                );
-                complitions.sort();
-                self.completions = Rc::new(complitions);
-            }
+        if let CursorPosition::OnWordRightEdge(i) = pos {
+            let range = words[i];
+            let mut complitions = self.completer.complete(
+                &self.buffer.as_str()[range.0..range.1],
+            );
+            complitions.sort();
+            self.completions = Rc::new(complitions);
         };
     }
 
@@ -92,16 +87,14 @@ impl Complete for Editor {
             page_size + 1
         };
 
-        let words = self.buffer.get_words();
+        let (words, pos) = self.buffer.get_words_and_pos(self.pos);
         let completion_start_pos = self.prompt.len() + 1 +
-            match CursorPosition::get(self.pos, &words) {
-                CursorPosition::InSpace(_, _) |
-                CursorPosition::InWord(_) => 0,
-                CursorPosition::OnWordLeftEdge(i) |
+            match pos {
                 CursorPosition::OnWordRightEdge(i) => words[i].0,
+                _ => 0,
             };
 
-        let completions = self.completer.create_string(
+        let completions = self.completer.create_completion_area(
             &self.completions,
             self.completer_index,
             completion_start_pos,
@@ -146,16 +139,11 @@ impl Complete for Editor {
     fn swap_completion(&mut self, index: usize) {
         if let Some(cmd) = self.completions.clone().get(index) {
             let (words, pos) = self.buffer.get_words_and_pos(self.pos);
-            match pos {
-                CursorPosition::InSpace(_, _) |
-                CursorPosition::InWord(_) => (),
-                CursorPosition::OnWordLeftEdge(i) |
-                CursorPosition::OnWordRightEdge(i) => {
-                    let range = words[i];
-                    self.delete(range.1 - range.0);
-                    self.put(cmd);
-                }
-            };
+            if let CursorPosition::OnWordRightEdge(i) = pos {
+                let range = words[i];
+                self.delete(range.1 - range.0);
+                self.put(cmd);
+            }
         }
     }
 }

@@ -55,7 +55,7 @@ impl Completer {
         res
     }
 
-    pub fn create_string(
+    pub fn create_completion_area(
         &mut self,
         completions: &[String],
         pos: usize,
