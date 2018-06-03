@@ -12,21 +12,21 @@ use readline::buffer::{Buffer, CursorPosition};
 
 pub struct Editor {
     /// Current cursor posion.
-    pub pos: usize,
+    pos: usize,
 
     pub prompt: String,
-    pub buffer: Buffer,
+    buffer: Buffer,
 
-    /// Writting `stdin` when function `write` is called.
-    pub w_buffer: String,
+    /// Writting `stdout` when function `write` is called.
+    buffer_for_stdout: String,
 
     /// Terminal's size infomation.
     pub win_size: terminal::Winsize,
 
-    pub completer: Completer,
-    pub completions: Rc<Vec<String>>,
-    pub completer_index: usize,
-    pub completer_is_after: bool,
+    completer: Completer,
+    completions: Rc<Vec<String>>,
+    completer_index: usize,
+    completer_is_after: bool,
 
     pub history: History,
 }
@@ -69,9 +69,13 @@ impl Complete for Editor {
         }
 
         if self.completer_is_after {
-            self.w_buffer.push_str(&terminal::move_under_line_first(1));
-            self.w_buffer.push_str(&terminal::clear_to_screen_end());
-            self.w_buffer.push_str(&terminal::move_up(1));
+            self.buffer_for_stdout.push_str(
+                &terminal::move_under_line_first(1),
+            );
+            self.buffer_for_stdout.push_str(
+                &terminal::clear_to_screen_end(),
+            );
+            self.buffer_for_stdout.push_str(&terminal::move_up(1));
             self.come_back();
         }
 
@@ -154,7 +158,7 @@ impl Editor {
             pos: 0,
             prompt: prompt_,
             buffer: Buffer::new(),
-            w_buffer: String::new(),
+            buffer_for_stdout: String::new(),
 
             win_size: terminal::get_winsize(STDOUT_FILENO).unwrap(),
 
@@ -185,7 +189,7 @@ impl Editor {
             let line = self.buffer.clone();
             let old_pos = self.pos;
             self.clear_to_screen_end();
-            self.w_buffer.push_str(
+            self.buffer_for_stdout.push_str(
                 &line.as_str().get(old_pos..).unwrap(),
             );
             self.move_to(old_pos + s.len());
@@ -201,9 +205,9 @@ impl Editor {
         if let Some(first_tab_index) = self.buffer.as_str()[delete_range].find('\t') {
             if let Some(last_tab_index) = self.buffer.as_str().rfind('\t') {
                 if first_tab_index == last_tab_index {
-                    self.w_buffer.push_str(&terminal::move_left(5));
+                    self.buffer_for_stdout.push_str(&terminal::move_left(5));
                 } else {
-                    self.w_buffer.push_str(&terminal::move_left(7));
+                    self.buffer_for_stdout.push_str(&terminal::move_left(7));
                 }
             }
         }
@@ -215,22 +219,24 @@ impl Editor {
         if !self.is_last() {
             let line = self.buffer.clone();
             let pos = self.pos;
-            self.w_buffer.push_str(&line.as_str().get(pos..).unwrap());
+            self.buffer_for_stdout.push_str(
+                &line.as_str().get(pos..).unwrap(),
+            );
             self.move_to(pos);
         }
     }
 
     pub fn write_line(&mut self) {
-        self.w_buffer.push_str(&self.buffer.as_str());
+        self.buffer_for_stdout.push_str(&self.buffer.as_str());
     }
 
     pub fn write_prompt(&mut self) {
-        self.w_buffer.push_str(&self.prompt);
+        self.buffer_for_stdout.push_str(&self.prompt);
     }
 
     pub fn write_str(&mut self, s: &str) {
         self.pos += s.len();
-        self.w_buffer.push_str(s)
+        self.buffer_for_stdout.push_str(s)
     }
 
     pub fn come_back(&mut self) {
@@ -249,7 +255,7 @@ impl Editor {
     }
 
     pub fn new_line(&mut self) {
-        self.w_buffer.push_str("\n");
+        self.buffer_for_stdout.push_str("\n");
     }
 
     pub fn clear_line(&mut self) -> io::Result<()> {
@@ -264,13 +270,16 @@ impl Editor {
 
     pub fn clear_screen(&mut self) {
         self.pos = 0;
-        self.w_buffer.push_str(
-            &format!("\x1b[2J\x1b[1;1H{}", self.prompt),
-        );
+        self.buffer_for_stdout.push_str(&format!(
+            "\x1b[2J\x1b[1;1H{}",
+            self.prompt
+        ));
     }
 
     pub fn clear_to_screen_end(&mut self) {
-        self.w_buffer.push_str(&terminal::clear_to_screen_end());
+        self.buffer_for_stdout.push_str(
+            &terminal::clear_to_screen_end(),
+        );
     }
 
     pub fn move_left(&mut self, n: usize) {
@@ -278,7 +287,7 @@ impl Editor {
             return;
         }
         self.pos -= n;
-        self.w_buffer.push_str(&terminal::move_left(n));
+        self.buffer_for_stdout.push_str(&terminal::move_left(n));
     }
 
     pub fn move_right(&mut self, n: usize) {
@@ -286,7 +295,7 @@ impl Editor {
             return;
         }
         self.pos += n;
-        self.w_buffer.push_str(&terminal::move_right(n));
+        self.buffer_for_stdout.push_str(&terminal::move_right(n));
     }
 
     pub fn move_to_first(&mut self) {
@@ -300,9 +309,9 @@ impl Editor {
 
     fn move_to(&mut self, n: usize) {
         self.pos = n;
-        self.w_buffer.push_str(
-            &terminal::move_to(self.prompt.len() + n + 1),
-        );
+        self.buffer_for_stdout.push_str(&terminal::move_to(
+            self.prompt.len() + n + 1,
+        ));
     }
 
     fn is_start(&self) -> bool {
@@ -314,14 +323,14 @@ impl Editor {
     }
 
     pub fn display(&mut self) -> io::Result<()> {
-        self.write(&self.w_buffer)?;
-        self.w_buffer.clear();
+        self.write(&self.buffer_for_stdout)?;
+        self.buffer_for_stdout.clear();
         Ok(())
     }
 
     pub fn write_sub(&mut self, s: &str, height: usize) {
-        self.w_buffer.push_str(s);
-        self.w_buffer.push_str(&terminal::move_up(height));
+        self.buffer_for_stdout.push_str(s);
+        self.buffer_for_stdout.push_str(&terminal::move_up(height));
         let pos = self.pos;
         self.move_to(pos);
     }
