@@ -50,14 +50,15 @@ impl Reader {
 
             if wait_input() {
                 let mut ch: Vec<u8> = Vec::new();
-                let _ = self.read_char(&mut ch).unwrap();
-                let res = self.find_bind(&ch);
-                let e = Event::from_event_kind(&res);
-                if let Ok(Some(line)) = (e.handler)(&mut self.context, ch) {
+                if self.read_char(&mut ch).is_ok() {
+                    let res = self.find_bind(&ch);
+                    let e = Event::from_event_kind(&res);
+                    if let Ok(Some(line)) = (e.handler)(&mut self.context, ch) {
+                        self.context.editor.display().unwrap();
+                        return Some(line);
+                    }
                     self.context.editor.display().unwrap();
-                    return Some(line);
                 }
-                self.context.editor.display().unwrap();
             }
         }
     }
