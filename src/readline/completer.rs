@@ -112,23 +112,20 @@ impl Completer {
         for (i, completion) in completions[self.w_start..w_end].iter().enumerate() {
             line.push_str(&terminal::move_to(start_pos));
 
+            let padded_completion = format!("{:width$}", completion, width = self.max_len + 1);
+
             if (pos == 0 && i == 0) || i + self.w_start + 1 == pos {
-                line.push_str(&format!("\x1B[7m{}", completion));
+                line.push_str(&color::white(padded_completion.as_ref()));
             } else {
-                line.push_str(&format!("\x1B[44m{}", completion));
+                line.push_str(&color::light_blue(padded_completion.as_ref()));
             }
 
-            for _ in 0..(self.max_len - completion.len() + 1) {
-                line.push_str(" ")
-            }
-
-            line.push_str("\x1B[m");
-            line.push_str("\x1B[48;5;24m bin \x1B[m");
+            line.push_str(&color::dark_blue(" bin "));
 
             if bar_start <= i && i <= bar_end {
                 line.push_str(&color::gray(" "));
             } else {
-                line.push_str(&color::blue(" "));
+                line.push_str(&color::light_blue(" "));
             }
 
             line.push_str("\n");
