@@ -10,14 +10,14 @@ use readline::color;
 #[derive(Default)]
 pub struct Completer {
     pub max_len: usize,
-    pub w_start: usize,
+    pub completion_area_first: usize,
 }
 
 impl Completer {
     pub fn new() -> Self {
         Self {
             max_len: 0,
-            w_start: 0,
+            completion_area_first: 0,
         }
     }
 
@@ -70,51 +70,47 @@ impl Completer {
 
         line.push_str(&terminal::move_under_line_first(1));
 
-        let mut w_end = if page_size < completions.len() {
-            self.w_start + page_size
-        } else {
-            completions.len()
-        };
+        let is_needed_scroll = page_size < completions.len();
 
-        let mut bar_start = 0;
-        let mut bar_end = completions.len();
+        let mut scroll_bar_start = 0;
+        let mut scroll_bar_end = completions.len();
 
-        if completions.len() <= page_size {
-            self.w_start = 0;
-            w_end = completions.len();
-        } else {
+        let create_range = |start: usize| start..(start + page_size);
+        let mut completion_area_range = create_range(self.completion_area_first);
+
+        if is_needed_scroll {
+            let is_overed = pos >= self.completion_area_first + page_size;
+            let is_undered = pos < self.completion_area_first;
+            let is_head = pos == self.completion_area_first;
             // Move a window edge.
-            match pos {
-                n if w_end <= n => {
-                    let d = pos - page_size;
-                    self.w_start = d;
-                    w_end = page_size + d;
-                }
-                n if self.w_start >= pos => {
-                    if n == 0 {
-                        self.w_start = 0;
-                        w_end = page_size;
-                    } else {
-                        let d = self.w_start - n + 1;
-                        self.w_start -= d;
-                        w_end -= d;
-                    }
-                }
-                _ => (),
-            };
+            if is_overed {
+                let exceeded_n = pos - page_size;
+                self.completion_area_first = exceeded_n;
+                completion_area_range = create_range(exceeded_n);
+            } else if is_undered {
+                let fall_n = self.completion_area_first - pos + 1;
+                self.completion_area_first -= fall_n;
+                completion_area_range = create_range(self.completion_area_first);
+            } else if is_head {
+                self.completion_area_first = 0;
+                completion_area_range = create_range(0);
+            }
 
             let blank_n = completions.len() - page_size + 1;
-            bar_end = w_end - blank_n;
-            bar_start = self.w_start;
+            scroll_bar_start = self.completion_area_first;
+            scroll_bar_end = self.completion_area_first + page_size - blank_n;
+        } else {
+            // TODO
+            self.completion_area_first = 0;
+            completion_area_range = 0..completions.len();
         }
 
-
-        for (i, completion) in completions[self.w_start..w_end].iter().enumerate() {
+        for (i, completion) in completions[completion_area_range].iter().enumerate() {
             line.push_str(&terminal::move_to(start_pos));
 
             let padded_completion = format!("{:width$}", completion, width = self.max_len + 1);
 
-            if (pos == 0 && i == 0) || i + self.w_start + 1 == pos {
+            if (pos == 0 && i == 0) || i + self.completion_area_first + 1 == pos {
                 line.push_str(&color::white(padded_completion.as_ref()));
             } else {
                 line.push_str(&color::light_blue(padded_completion.as_ref()));
@@ -122,7 +118,7 @@ impl Completer {
 
             line.push_str(&color::dark_blue(" bin "));
 
-            if bar_start <= i && i <= bar_end {
+            if scroll_bar_start <= i && i <= scroll_bar_end {
                 line.push_str(&color::gray(" "));
             } else {
                 line.push_str(&color::light_blue(" "));
