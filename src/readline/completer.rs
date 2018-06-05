@@ -55,6 +55,23 @@ impl Completer {
         res
     }
 
+    /// completion_area
+    ///
+    ///    start_pos           desc  scroll_bar
+    ///       |                  |      |
+    ///       v                  v      v
+    ///   +-> +----------------+------+--+
+    /// p |   |  completion1   | bin  |  | <---- self.completion_area_first
+    /// a |   +----------------+------+  |
+    /// g |   |  completion2   | bin  |  | <---- pos(example)
+    /// e |   +----------------+------+--| <---+
+    /// | |   |  completion3   | bin  |  |     |
+    /// s |   +----------------+------+  |     |
+    /// i |   |  completion4   | bin  |  |     | blank_n
+    /// z |   +----------------+------+  |     |
+    /// e |   |  completion5   | path |  |     |
+    ///   +-> +----------------+------+--+ <---+
+    ///
     pub fn create_completion_area(
         &mut self,
         completions: &[String],
@@ -63,12 +80,12 @@ impl Completer {
         page_size: usize,
     ) -> String {
 
-        let mut line = String::new();
+        let mut completion_area = String::new();
         if completions.len() > page_size * 2 - 1 {
-            return line;
+            return completion_area;
         }
 
-        line.push_str(&terminal::move_under_line_first(1));
+        completion_area.push_str(&terminal::move_under_line_first(1));
 
         let is_needed_scroll = page_size < completions.len();
 
@@ -106,27 +123,27 @@ impl Completer {
         }
 
         for (i, completion) in completions[completion_area_range].iter().enumerate() {
-            line.push_str(&terminal::move_to(start_pos));
+            completion_area.push_str(&terminal::move_to(start_pos));
 
             let padded_completion = format!("{:width$}", completion, width = self.max_len + 1);
 
             if (pos == 0 && i == 0) || i + self.completion_area_first + 1 == pos {
-                line.push_str(&color::white(padded_completion.as_ref()));
+                completion_area.push_str(&color::white(padded_completion.as_ref()));
             } else {
-                line.push_str(&color::light_blue(padded_completion.as_ref()));
+                completion_area.push_str(&color::light_blue(padded_completion.as_ref()));
             }
 
-            line.push_str(&color::dark_blue(" bin "));
+            completion_area.push_str(&color::dark_blue(" bin "));
 
             if scroll_bar_start <= i && i <= scroll_bar_end {
-                line.push_str(&color::gray(" "));
+                completion_area.push_str(&color::gray(" "));
             } else {
-                line.push_str(&color::light_blue(" "));
+                completion_area.push_str(&color::light_blue(" "));
             }
 
-            line.push_str("\n");
+            completion_area.push_str("\n");
         }
 
-        line
+        completion_area
     }
 }
