@@ -8,12 +8,12 @@ use readline::terminal;
 use readline::color;
 
 #[derive(Default)]
-pub struct Completer {
+pub struct Bin {
     pub max_len: usize,
     pub completion_area_first: usize,
 }
 
-impl Completer {
+impl Bin {
     pub fn new() -> Self {
         Self {
             max_len: 0,

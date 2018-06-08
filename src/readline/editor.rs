@@ -6,7 +6,7 @@ use std::rc::Rc;
 use nix::libc::STDOUT_FILENO;
 
 use readline::terminal;
-use readline::completer::Completer;
+use readline::completer::Bin as CompleterBin;
 use readline::history::History;
 use readline::buffer::{Buffer, CursorPosition};
 
@@ -23,7 +23,7 @@ pub struct Editor {
     /// Terminal's size infomation.
     pub win_size: terminal::Winsize,
 
-    completer: Completer,
+    completer: CompleterBin,
     completions: Rc<Vec<String>>,
     completer_index: usize,
     completer_is_after: bool,
@@ -162,7 +162,7 @@ impl Editor {
 
             win_size: terminal::get_winsize(STDOUT_FILENO).unwrap(),
 
-            completer: Completer::new(),
+            completer: CompleterBin::new(),
             completions: Rc::new(Vec::new()),
             completer_index: 0,
             completer_is_after: false,
