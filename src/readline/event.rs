@@ -46,8 +46,8 @@ impl Event {
                         // editor.put("\t".into())?;
                         return Ok(None);
                     } else {
-                        con.editor.complete();
-                        con.editor.completion_next();
+                        con.editor.complete(&mut *con.completer);
+                        con.editor.completion_next(&mut *con.completer);
                         con.mode = Mode::Completion;
                     }
                     Ok(None)
@@ -91,53 +91,39 @@ impl Event {
                 }
             }
             Some(Kind::PreviousHistory) => {
-                |Context {
-                     editor,
-                     history,
-                     mode,
-                 },
-                 _| {
-                    match mode {
-                        Mode::Completion => {
-                            editor.completion_prev();
-                            Ok(None)
+                |con, _| match con.mode {
+                    Mode::Completion => {
+                        con.editor.completion_prev(&mut *con.completer);
+                        Ok(None)
+                    }
+                    Mode::Normal => {
+                        if con.history.is_started() {
+                            con.history.set_first(con.editor.line().clone());
                         }
-                        Mode::Normal => {
-                            if history.is_started() {
-                                history.set_first(editor.line().clone());
-                            }
-                            let history = match history.prev() {
-                                Some(h) => h,
-                                None => return Ok(None),
-                            };
-                            editor.replace(history);
-                            editor.move_to_end();
-                            Ok(None)
-                        }
+                        let history = match con.history.prev() {
+                            Some(h) => h,
+                            None => return Ok(None),
+                        };
+                        con.editor.replace(history);
+                        con.editor.move_to_end();
+                        Ok(None)
                     }
                 }
             }
             Some(Kind::NextHistory) => {
-                |Context {
-                     editor,
-                     history,
-                     mode,
-                 },
-                 _| {
-                    match mode {
-                        Mode::Completion => {
-                            editor.completion_next();
-                            Ok(None)
-                        }
-                        Mode::Normal => {
-                            let history = match history.next() {
-                                Some(h) => h,
-                                None => return Ok(None),
-                            };
-                            editor.replace(history);
-                            editor.move_to_end();
-                            Ok(None)
-                        }
+                |con, _| match con.mode {
+                    Mode::Completion => {
+                        con.editor.completion_next(&mut *con.completer);
+                        Ok(None)
+                    }
+                    Mode::Normal => {
+                        let history = match con.history.next() {
+                            Some(h) => h,
+                            None => return Ok(None),
+                        };
+                        con.editor.replace(history);
+                        con.editor.move_to_end();
+                        Ok(None)
                     }
                 }
             }

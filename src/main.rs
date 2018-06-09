@@ -10,6 +10,7 @@ use mican::parser;
 use mican::process::Process;
 use mican::readline::reader::Reader;
 use mican::readline::context::Context;
+use mican::readline::completer::Bin as BinCompleter;
 
 fn display_logo() {
     let path = Path::new("logo.txt");
@@ -46,7 +47,7 @@ fn waitpids(children: Vec<Process>) {
 fn main() {
     display_logo();
     println!("Welcome to Mican Unix Shell.");
-    let mut reader = Reader::new(Context::new());
+    let mut reader = Reader::new(Context::new(Box::new(BinCompleter::new())));
 
     loop {
         if let Some(input) = reader.read_line() {

@@ -7,21 +7,28 @@ use std::iter::Iterator;
 use readline::terminal;
 use readline::color;
 
+pub trait Completer {
+    fn complete(&mut self, path: &str) -> Vec<String>;
+
+    fn max_len(&self) -> usize;
+}
+
 #[derive(Default)]
 pub struct Bin {
     pub max_len: usize,
-    pub completion_area_first: usize,
 }
-
 impl Bin {
     pub fn new() -> Self {
-        Self {
-            max_len: 0,
-            completion_area_first: 0,
-        }
+        Self { max_len: 0 }
+    }
+}
+
+impl Completer for Bin {
+    fn max_len(&self) -> usize {
+        self.max_len
     }
 
-    pub fn complete(&mut self, path: &str) -> Vec<String> {
+    fn complete(&mut self, path: &str) -> Vec<String> {
         let (_, fname) = match path.rfind(is_separator) {
             Some(pos) => (Some(&path[..pos + 1]), &path[pos + 1..]),
             None => (None, path),
@@ -54,6 +61,21 @@ impl Bin {
         self.max_len = len;
         res
     }
+}
+
+#[derive(Default)]
+pub struct CompletionArea {
+    pub max_len: usize,
+    pub completion_area_first: usize,
+}
+
+impl CompletionArea {
+    pub fn new() -> Self {
+        Self {
+            max_len: 0,
+            completion_area_first: 0,
+        }
+    }
 
     /// completion_area
     ///
@@ -78,6 +100,7 @@ impl Bin {
         pos: usize,
         start_pos: usize,
         page_size: usize,
+        max_len: usize,
     ) -> String {
 
         let mut completion_area = String::new();
@@ -125,7 +148,7 @@ impl Bin {
         for (i, completion) in completions[completion_area_range].iter().enumerate() {
             completion_area.push_str(&terminal::move_to(start_pos));
 
-            let padded_completion = format!("{:width$}", completion, width = self.max_len + 1);
+            let padded_completion = format!("{:width$}", completion, width = max_len + 1);
 
             if (pos == 0 && i == 0) || i + self.completion_area_first + 1 == pos {
                 completion_area.push_str(&color::white(padded_completion.as_ref()));

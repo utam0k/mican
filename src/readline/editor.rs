@@ -6,7 +6,7 @@ use std::rc::Rc;
 use nix::libc::STDOUT_FILENO;
 
 use readline::terminal;
-use readline::completer::Bin as CompleterBin;
+use readline::completer::{Completer, CompletionArea};
 use readline::history::History;
 use readline::buffer::{Buffer, CursorPosition};
 
@@ -23,30 +23,31 @@ pub struct Editor {
     /// Terminal's size infomation.
     pub win_size: terminal::Winsize,
 
-    completer: CompleterBin,
+    // completer: CompleterBin,
     completions: Rc<Vec<String>>,
     completer_index: usize,
     completer_is_after: bool,
+    completion_area: CompletionArea,
 
     pub history: History,
 }
 
 pub trait Complete {
-    fn complete(&mut self);
+    fn complete(&mut self, completer: &mut Completer);
 
-    fn completion_disply(&mut self);
+    fn completion_disply(&mut self, completer: &mut Completer);
 
     fn completion_clear(&mut self);
 
-    fn completion_next(&mut self);
+    fn completion_next(&mut self, completer: &mut Completer);
 
-    fn completion_prev(&mut self);
+    fn completion_prev(&mut self, completer: &mut Completer);
 
     fn swap_completion(&mut self, index: usize);
 }
 
 impl Complete for Editor {
-    fn complete(&mut self) {
+    fn complete(&mut self, completer: &mut Completer) {
         if self.completer_is_after {
             return;
         }
@@ -55,9 +56,7 @@ impl Complete for Editor {
         let (words, pos) = self.buffer.get_words_and_pos(self.pos);
         if let CursorPosition::OnWordRightEdge(i) = pos {
             let range = words[i];
-            let mut complitions = self.completer.complete(
-                &self.buffer.as_str()[range.0..range.1],
-            );
+            let mut complitions = completer.complete(&self.buffer.as_str()[range.0..range.1]);
             complitions.sort();
             self.completions = Rc::new(complitions);
         };
@@ -83,7 +82,7 @@ impl Complete for Editor {
         self.completer_is_after = false;
     }
 
-    fn completion_disply(&mut self) {
+    fn completion_disply(&mut self, completer: &mut Completer) {
         let page_size = 10;
         let height = if self.completions.len() < page_size {
             self.completions.len() + 1
@@ -98,16 +97,17 @@ impl Complete for Editor {
                 _ => 0,
             };
 
-        let completions = self.completer.create_completion_area(
+        let completions = self.completion_area.create_completion_area(
             &self.completions,
             self.completer_index,
             completion_start_pos,
             page_size,
+            completer.max_len(),
         );
         self.write_sub(&completions, height);
     }
 
-    fn completion_next(&mut self) {
+    fn completion_next(&mut self, completer: &mut Completer) {
         if !self.completer_is_after {
             return;
         }
@@ -120,10 +120,10 @@ impl Complete for Editor {
             self.completer_index - 1
         };
         self.swap_completion(index);
-        self.completion_disply();
+        self.completion_disply(completer);
     }
 
-    fn completion_prev(&mut self) {
+    fn completion_prev(&mut self, completer: &mut Completer) {
         if !self.completer_is_after {
             return;
         }
@@ -137,7 +137,7 @@ impl Complete for Editor {
         };
 
         self.swap_completion(index);
-        self.completion_disply();
+        self.completion_disply(completer);
     }
 
     fn swap_completion(&mut self, index: usize) {
@@ -162,10 +162,11 @@ impl Editor {
 
             win_size: terminal::get_winsize(STDOUT_FILENO).unwrap(),
 
-            completer: CompleterBin::new(),
+            // completer: CompleterBin::new(),
             completions: Rc::new(Vec::new()),
             completer_index: 0,
             completer_is_after: false,
+            completion_area: CompletionArea::new(),
 
             history: History::new(),
         }

@@ -1,7 +1,7 @@
 pub mod reader;
 pub mod context;
+pub mod completer;
 mod terminal;
-mod completer;
 mod history;
 mod editor;
 mod event;
