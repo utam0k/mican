@@ -33,21 +33,21 @@ pub struct Editor {
 }
 
 pub trait Complete {
-    fn complete(&mut self, completer: &mut Completer);
+    fn complete(&mut self, completer: &mut dyn Completer);
 
-    fn completion_disply(&mut self, completer: &mut Completer);
+    fn completion_disply(&mut self, completer: &mut dyn Completer);
 
     fn completion_clear(&mut self);
 
-    fn completion_next(&mut self, completer: &mut Completer);
+    fn completion_next(&mut self, completer: &mut dyn Completer);
 
-    fn completion_prev(&mut self, completer: &mut Completer);
+    fn completion_prev(&mut self, completer: &mut dyn Completer);
 
     fn swap_completion(&mut self, index: usize);
 }
 
 impl Complete for Editor {
-    fn complete(&mut self, completer: &mut Completer) {
+    fn complete(&mut self, completer: &mut dyn Completer) {
         if self.completer_is_after {
             return;
         }
@@ -82,7 +82,7 @@ impl Complete for Editor {
         self.completer_is_after = false;
     }
 
-    fn completion_disply(&mut self, completer: &mut Completer) {
+    fn completion_disply(&mut self, completer: &mut dyn Completer) {
         let page_size = 10;
         let height = if self.completions.len() < page_size {
             self.completions.len() + 1
@@ -107,7 +107,7 @@ impl Complete for Editor {
         self.write_sub(&completions, height);
     }
 
-    fn completion_next(&mut self, completer: &mut Completer) {
+    fn completion_next(&mut self, completer: &mut dyn Completer) {
         if !self.completer_is_after {
             return;
         }
@@ -123,7 +123,7 @@ impl Complete for Editor {
         self.completion_disply(completer);
     }
 
-    fn completion_prev(&mut self, completer: &mut Completer) {
+    fn completion_prev(&mut self, completer: &mut dyn Completer) {
         if !self.completer_is_after {
             return;
         }

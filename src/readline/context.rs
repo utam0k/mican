@@ -11,11 +11,11 @@ pub struct Context {
     pub editor: Editor,
     pub history: History,
     pub mode: Mode,
-    pub completer: Box<Completer>,
+    pub completer: Box<dyn Completer>,
 }
 
 impl Context {
-    pub fn new(comp: Box<Completer>) -> Self {
+    pub fn new(comp: Box<dyn Completer>) -> Self {
         Self {
             editor: Editor::new("> ".into()),
             history: History::new(),
