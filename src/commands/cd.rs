@@ -3,9 +3,11 @@ use token::CommandData;
 use std::env;
 
 // TODO
+
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 pub fn run(cmd: CommandData) -> Result<(), String> {
     if cmd.options.is_empty() {
+        #[allow(deprecated)]
         env::set_current_dir(&env::home_dir().unwrap()).unwrap();
         return Ok(());
     }

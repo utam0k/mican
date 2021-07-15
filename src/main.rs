@@ -16,14 +16,14 @@ fn display_logo() {
     let path = Path::new("logo.txt");
 
     let mut file = match fs::File::open(&path) {
-        Err(why) => panic!("couldn't open: {}", Error::description(&why)),
+        Err(why) => panic!("couldn't open: {}", <dyn Error>::to_string(&why)),
         Ok(file) => file,
     };
 
     let mut s = String::new();
 
     if let Err(e) = file.read_to_string(&mut s) {
-        panic!("couldn't read: {}", Error::description(&e));
+        panic!("couldn't read: {}", <dyn Error>::to_string(&e));
     } else {
         for c in s.chars() {
             match c {
